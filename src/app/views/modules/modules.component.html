@@ -1,0 +1,495 @@
+<c-row class="mb-4">
+  <c-col>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="mb-1">Modules Management</h2>
+        <p class="text-body-secondary mb-0">Manage system modules</p>
+      </div>
+      <button
+        cButton
+        color="primary"
+        (click)="openCreateModal()"
+        [disabled]="loading()"
+      >
+        <svg cIcon name="cilPlus" class="me-2"></svg>
+        Create Module
+      </button>
+    </div>
+  </c-col>
+</c-row>
+
+<!-- Loading State -->
+@if (loading() && modules().length === 0) {
+  <c-row>
+    <c-col xs="12" class="text-center py-5">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-3 text-body-secondary">Loading modules...</p>
+    </c-col>
+  </c-row>
+}
+
+<!-- Error State -->
+@if (error() && modules().length === 0) {
+  <c-row>
+    <c-col xs="12">
+      <c-alert
+        color="danger"
+        [dismissible]="true"
+        (visibleChange)="!$event && error.set('')"
+      >
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        {{ error() }}
+      </c-alert>
+    </c-col>
+  </c-row>
+}
+
+@if (!loading() || modules().length > 0) {
+  <c-row class="mb-4">
+    <c-col xs="12" md="6">
+      <div class="position-relative">
+        <svg
+          cIcon
+          name="cilSearch"
+          class="position-absolute"
+          style="
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+          "
+        ></svg>
+        <input
+          cFormControl
+          type="text"
+          placeholder="Search modules..."
+          [(ngModel)]="searchTerm"
+          style="padding-left: 40px"
+        />
+      </div>
+    </c-col>
+    <c-col xs="12" md="6" class="d-flex justify-content-end align-items-center">
+      <div class="btn-group" role="group">
+        <button
+          cButton
+          [color]="viewMode() === 'grid' ? 'primary' : 'light'"
+          (click)="viewMode.set('grid')"
+          size="sm"
+        >
+          <svg cIcon name="cilGrid"></svg>
+        </button>
+        <button
+          cButton
+          [color]="viewMode() === 'list' ? 'primary' : 'light'"
+          (click)="viewMode.set('list')"
+          size="sm"
+        >
+          <svg cIcon name="cilList"></svg>
+        </button>
+      </div>
+    </c-col>
+  </c-row>
+
+  <!-- Grid View -->
+  @if (viewMode() === "grid") {
+    <c-row>
+      @for (module of filteredModules; track module._id) {
+        <c-col xs="12" sm="6" lg="4" xl="3" class="mb-4">
+          <c-card class="h-100 module-card">
+            <c-card-body class="d-flex flex-column">
+              <div
+                class="d-flex justify-content-between align-items-start mb-3"
+              >
+                <div
+                  class="module-icon"
+                  [ngClass]="'bg-' + module.displayColor + '-subtle'"
+                >
+                  <svg
+                    cIcon
+                    [name]="module.displayIcon || 'cilLayers'"
+                    size="xl"
+                    [ngClass]="'text-' + module.displayColor"
+                  ></svg>
+                </div>
+                <c-dropdown alignment="end" variant="btn-group">
+                  <button cButton color="ghost" size="sm" cDropdownToggle>
+                    <svg cIcon name="cilOptions"></svg>
+                  </button>
+                  <ul cDropdownMenu>
+                    <li>
+                      <button cDropdownItem (click)="openEditModal(module)">
+                        <svg cIcon name="cilPencil" class="me-2"></svg>
+                        Edit
+                      </button>
+                    </li>
+                    <li><hr cDropdownDivider /></li>
+                    <li>
+                      <button
+                        cDropdownItem
+                        (click)="openDeleteModal(module)"
+                        class="text-danger"
+                      >
+                        <svg cIcon name="cilTrash" class="me-2"></svg>
+                        Delete
+                      </button>
+                    </li>
+                  </ul>
+                </c-dropdown>
+              </div>
+
+              <h5 class="mb-2">{{ formatModuleName(module.name) }}</h5>
+              <p class="text-body-secondary small mb-2">
+                <strong>Code:</strong> {{ module.code }}
+              </p>
+              @if (module.description) {
+                <p class="text-body-secondary small mb-3 flex-grow-1">
+                  {{ module.description }}
+                </p>
+              } @else {
+                <p
+                  class="text-body-secondary small mb-3 flex-grow-1 fst-italic"
+                >
+                  No description
+                </p>
+              }
+
+              <div
+                class="d-flex justify-content-between align-items-center pt-3 border-top"
+              >
+                <div class="d-flex align-items-center">
+                  <span class="small text-body-secondary"
+                    >Order: {{ module.order }}</span
+                  >
+                </div>
+                <c-badge [color]="module.isActive ? 'success' : 'secondary'">
+                  {{ module.isActive ? "Active" : "Inactive" }}
+                </c-badge>
+              </div>
+            </c-card-body>
+          </c-card>
+        </c-col>
+      }
+    </c-row>
+  }
+
+  <!-- List View -->
+  @if (viewMode() === "list") {
+    <c-row>
+      <c-col xs="12">
+        <c-card>
+          <c-card-body class="p-0">
+            <table cTable [hover]="true" class="mb-0">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 50px"></th>
+                  <th scope="col">Module Name</th>
+                  <th scope="col">Code</th>
+                  <th scope="col">Description</th>
+                  <th scope="col" style="width: 100px">Order</th>
+                  <th scope="col" style="width: 120px">Status</th>
+                  <th scope="col" style="width: 100px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (module of filteredModules; track module._id) {
+                  <tr>
+                    <td>
+                      <div
+                        class="module-icon-small"
+                        [ngClass]="'bg-' + module.displayColor + '-subtle'"
+                      >
+                        <svg
+                          cIcon
+                          [name]="module.displayIcon || 'cilLayers'"
+                          size="lg"
+                          [ngClass]="'text-' + module.displayColor"
+                        ></svg>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>{{ formatModuleName(module.name) }}</strong>
+                    </td>
+                    <td>
+                      <code class="text-body-secondary">{{ module.code }}</code>
+                    </td>
+                    <td>
+                      <span class="text-body-secondary">
+                        {{ module.description || "No description" }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <c-badge color="info">{{ module.order }}</c-badge>
+                    </td>
+                    <td>
+                      <c-badge
+                        [color]="module.isActive ? 'success' : 'secondary'"
+                      >
+                        {{ module.isActive ? "Active" : "Inactive" }}
+                      </c-badge>
+                    </td>
+                    <td>
+                      <button
+                        cButton
+                        color="ghost"
+                        size="sm"
+                        class="me-1"
+                        (click)="openEditModal(module)"
+                      >
+                        <svg cIcon name="cilPencil"></svg>
+                      </button>
+                      <button
+                        cButton
+                        color="ghost"
+                        size="sm"
+                        (click)="openDeleteModal(module)"
+                      >
+                        <svg cIcon name="cilTrash" class="text-danger"></svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  }
+
+  @if (filteredModules.length === 0) {
+    <c-row>
+      <c-col xs="12">
+        <c-card>
+          <c-card-body class="text-center py-5">
+            <svg
+              cIcon
+              name="cilSearch"
+              size="3xl"
+              class="text-body-secondary mb-3"
+            ></svg>
+            <h5 class="text-body-secondary">No modules found</h5>
+            <p class="text-body-secondary">
+              Try adjusting your search criteria
+            </p>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  }
+
+  <!-- Create/Edit Modal -->
+  <c-modal
+    [visible]="modalVisible()"
+    (visibleChange)="modalVisible.set($event)"
+    size="lg"
+  >
+    <c-modal-header>
+      <h5 cModalTitle>
+        {{ isEditMode() ? "Edit Module" : "Create New Module" }}
+      </h5>
+      <button cButtonClose (click)="closeModal()"></button>
+    </c-modal-header>
+    <c-modal-body>
+      <!-- Error/Success Messages -->
+      @if (error()) {
+        <c-alert
+          color="danger"
+          [dismissible]="true"
+          (visibleChange)="!$event && error.set('')"
+        >
+          <svg cIcon name="cilWarning" class="me-2"></svg>
+          {{ error() }}
+        </c-alert>
+      }
+      @if (success()) {
+        <c-alert color="success">
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+          {{ success() }}
+        </c-alert>
+      }
+
+      <form>
+        <c-row>
+          <c-col xs="12" md="8">
+            <div class="mb-3">
+              <label cLabel for="moduleName"
+                >Module Name <span class="text-danger">*</span></label
+              >
+              <input
+                cFormControl
+                id="moduleName"
+                type="text"
+                [(ngModel)]="currentModule.name"
+                name="name"
+                placeholder="Enter module name"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+          <c-col xs="12" md="4">
+            <div class="mb-3">
+              <label cLabel for="moduleOrder">Order</label>
+              <input
+                cFormControl
+                id="moduleOrder"
+                type="number"
+                [(ngModel)]="currentModule.order"
+                name="order"
+                min="1"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+        </c-row>
+
+        <div class="mb-3">
+          <label cLabel for="moduleCode"
+            >Module Code <span class="text-danger">*</span></label
+          >
+          <input
+            cFormControl
+            id="moduleCode"
+            type="text"
+            [(ngModel)]="currentModule.code"
+            name="code"
+            placeholder="e.g., dashboard, members"
+            [disabled]="loading()"
+          />
+          <small class="text-body-secondary">
+            Unique identifier for the module (lowercase, no spaces)
+          </small>
+        </div>
+
+        <div class="mb-3">
+          <label cLabel for="moduleDescription">Description</label>
+          <textarea
+            cFormControl
+            id="moduleDescription"
+            rows="3"
+            [(ngModel)]="currentModule.description"
+            name="description"
+            placeholder="Describe the module"
+            [disabled]="loading()"
+          ></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label cLabel for="moduleIcon">Icon</label>
+          <select
+            cSelect
+            id="moduleIcon"
+            [(ngModel)]="currentModule.icon"
+            name="icon"
+            [disabled]="loading()"
+          >
+            @for (icon of availableIcons; track icon) {
+              <option [value]="icon">{{ icon }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <div class="form-check form-switch">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="isActive"
+              [(ngModel)]="currentModule.isActive"
+              name="isActive"
+              [disabled]="loading()"
+            />
+            <label class="form-check-label" for="isActive">
+              Active Module
+            </label>
+          </div>
+        </div>
+      </form>
+    </c-modal-body>
+    <c-modal-footer>
+      <button
+        cButton
+        color="light"
+        (click)="closeModal()"
+        [disabled]="loading()"
+      >
+        Cancel
+      </button>
+      <button
+        cButton
+        color="primary"
+        (click)="saveModule()"
+        [disabled]="!currentModule.name || !currentModule.code || loading()"
+      >
+        @if (loading()) {
+          <c-spinner size="sm" class="me-2"></c-spinner>
+        } @else {
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+        }
+        {{ isEditMode() ? "Update Module" : "Create Module" }}
+      </button>
+    </c-modal-footer>
+  </c-modal>
+
+  <!-- Delete Confirmation Modal -->
+  <c-modal
+    [visible]="deleteModalVisible()"
+    (visibleChange)="deleteModalVisible.set($event)"
+  >
+    <c-modal-header>
+      <h5 cModalTitle>Confirm Delete</h5>
+      <button cButtonClose (click)="closeDeleteModal()"></button>
+    </c-modal-header>
+    <c-modal-body>
+      <!-- Error/Success Messages -->
+      @if (error()) {
+        <c-alert
+          color="danger"
+          [dismissible]="true"
+          (visibleChange)="!$event && error.set('')"
+        >
+          <svg cIcon name="cilWarning" class="me-2"></svg>
+          {{ error() }}
+        </c-alert>
+      }
+      @if (success()) {
+        <c-alert color="success">
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+          {{ success() }}
+        </c-alert>
+      }
+
+      <div class="text-center py-3">
+        <svg cIcon name="cilWarning" size="3xl" class="text-warning mb-3"></svg>
+        <h5>Are you sure?</h5>
+        <p class="text-body-secondary mb-0">
+          You are about to delete the module
+          <strong>"{{ formatModuleName(moduleToDelete?.name || "") }}"</strong>.
+          This will mark it as inactive.
+        </p>
+      </div>
+    </c-modal-body>
+    <c-modal-footer>
+      <button
+        cButton
+        color="light"
+        (click)="closeDeleteModal()"
+        [disabled]="loading()"
+      >
+        Cancel
+      </button>
+      <button
+        cButton
+        color="danger"
+        (click)="deleteModule()"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <c-spinner size="sm" class="me-2"></c-spinner>
+        } @else {
+          <svg cIcon name="cilTrash" class="me-2"></svg>
+        }
+        Delete Module
+      </button>
+    </c-modal-footer>
+  </c-modal>
+}

@@ -2,6 +2,11 @@ import { INavData } from '@coreui/angular';
 
 export const navItems: INavData[] = [
   {
+    name: 'Modules',
+    url: '/modules',
+    iconComponent: { name: 'cil-layers' },
+  },
+  {
     name: 'Roles',
     url: '/roles',
     iconComponent: { name: 'cil-shield-alt' },

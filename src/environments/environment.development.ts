@@ -8,6 +8,7 @@ export const environment = {
     },
     roles: '/roles',
     users: '/users',
+    modules: '/modules',
   },
   storage: {
     tokenKey: 'accessToken',

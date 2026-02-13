@@ -91,6 +91,16 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'modules',
+        loadComponent: () =>
+          import('./views/modules/modules.component').then(
+            (m) => m.ModulesComponent,
+          ),
+        data: {
+          title: 'Modules',
+        },
+      },
+      {
         path: 'pages',
         loadChildren: () =>
           import('./views/pages/routes').then((m) => m.routes),
