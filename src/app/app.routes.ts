@@ -1,15 +1,29 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { loginGuard } from './guards/login.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'dashboard',
+    redirectTo: 'phone-login',
     pathMatch: 'full',
+  },
+  {
+    path: 'phone-login',
+    loadComponent: () =>
+      import('./views/auth/phone-login/phone-login.component').then(
+        (m) => m.PhoneLoginComponent,
+      ),
+    canActivate: [loginGuard],
+    data: {
+      title: 'Phone Login',
+    },
   },
   {
     path: '',
     loadComponent: () =>
       import('./layout').then((m) => m.DefaultLayoutComponent),
+    canActivate: [authGuard],
     data: {
       title: 'Home',
     },
@@ -113,5 +127,5 @@ export const routes: Routes = [
       title: 'Register Page',
     },
   },
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: 'phone-login' },
 ];

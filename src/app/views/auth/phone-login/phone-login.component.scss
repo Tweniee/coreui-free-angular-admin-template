@@ -1,0 +1,120 @@
+.auth-card {
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.auth-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, var(--cui-primary-bg-subtle) 0%, var(--cui-primary) 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.phone-display {
+  background: var(--cui-success-bg-subtle);
+  padding: 12px 20px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.otp-container {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 400px;
+}
+
+.otp-input {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  border: 2px solid var(--cui-border-color);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  background: var(--cui-body-bg);
+  color: var(--cui-body-color);
+
+  &:focus {
+    outline: none;
+    border-color: var(--cui-primary);
+    box-shadow: 0 0 0 4px var(--cui-primary-bg-subtle);
+    transform: scale(1.05);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.input-group-text {
+  background: var(--cui-body-bg);
+  border-color: var(--cui-border-color);
+}
+
+.form-control-lg {
+  font-size: 1.1rem;
+  padding: 0.75rem 1rem;
+}
+
+button[cButton] {
+  font-weight: 600;
+  transition: all 0.2s ease;
+
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 576px) {
+  .otp-input {
+    width: 40px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .otp-container {
+    gap: 6px;
+  }
+
+  .auth-card {
+    border-radius: 12px;
+  }
+
+  c-card-body {
+    padding: 1.5rem !important;
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .auth-card {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .otp-input {
+    &:focus {
+      box-shadow: 0 0 0 4px rgba(var(--cui-primary-rgb), 0.25);
+    }
+  }
+}
