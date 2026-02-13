@@ -40,18 +40,8 @@
                       [disabled]="loading()"
                       maxlength="13"
                       autoComplete="tel"
-                      pattern="[6-9][0-9]{9}"
-                      (input)="onPhoneInput()"
-                      [class.is-invalid]="phoneInvalid()"
                     />
                   </c-input-group>
-                  @if (phoneInvalid() && phoneNumber().length >= 10) {
-                    <div class="text-danger small mb-2">
-                      <svg cIcon name="cilWarning" size="sm" class="me-1"></svg>
-                      Please enter a valid Indian mobile number (starting with
-                      6-9)
-                    </div>
-                  }
 
                   <c-row>
                     <c-col xs="12">

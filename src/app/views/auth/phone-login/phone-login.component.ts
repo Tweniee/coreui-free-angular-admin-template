@@ -52,7 +52,6 @@ export class PhoneLoginComponent implements OnDestroy {
   loading = signal(false);
   error = signal('');
   countdown = signal(0);
-  phoneInvalid = signal(false);
 
   readonly otpLength = environment.otp.length;
   readonly resendTimeout = environment.otp.resendTimeout;
@@ -65,57 +64,54 @@ export class PhoneLoginComponent implements OnDestroy {
   ) {}
 
   formatPhoneNumber(value: string): string {
+    // Clean the input - remove all non-digit characters
     const cleaned = value.replace(/\D/g, '');
-    if (cleaned.startsWith('91')) {
-      return '+' + cleaned;
-    }
-    if (cleaned.length === 10) {
-      return '+91' + cleaned;
-    }
-    if (cleaned.startsWith('+')) {
-      return cleaned;
-    }
-    return '+91' + cleaned;
-  }
 
-  isValidPhoneNumber(phone: string): boolean {
-    return environment.validation.phoneRegex.test(phone);
-  }
-
-  onPhoneInput() {
-    const phone = this.phoneNumber();
-    if (phone.length >= environment.validation.phoneMinLength) {
-      this.phoneInvalid.set(!this.isValidPhoneNumber(phone));
-    } else {
-      this.phoneInvalid.set(false);
+    // Extract exactly 10 digits
+    let phoneDigits = cleaned;
+    if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      phoneDigits = cleaned.substring(2);
+    } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+      phoneDigits = cleaned.substring(1);
+    } else if (cleaned.length === 10) {
+      phoneDigits = cleaned;
+    } else if (cleaned.length > 10) {
+      phoneDigits = cleaned.slice(-10);
     }
+
+    // Return formatted for display
+    return '+91' + phoneDigits;
   }
 
   sendOtp() {
     this.error.set('');
     const phone = this.phoneNumber();
+    const cleaned = phone.replace(/\D/g, '');
 
-    if (!phone || phone.length < environment.validation.phoneMinLength) {
+    if (!phone || cleaned.length < 10) {
       this.error.set('Please enter a valid 10-digit mobile number');
-      this.phoneInvalid.set(true);
       return;
     }
-
-    // Validate using regex
-    if (!this.isValidPhoneNumber(phone)) {
-      this.error.set(
-        'Please enter a valid Indian mobile number (starting with 6-9)',
-      );
-      this.phoneInvalid.set(true);
-      return;
-    }
-
-    this.phoneInvalid.set(false);
 
     this.loading.set(true);
-    const formattedPhone = this.formatPhoneNumber(phone);
 
-    this.authService.sendOtp(formattedPhone).subscribe({
+    // Extract exactly 10 digits for backend (no country code or prefix)
+    let phoneToSend = cleaned;
+    if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      // Remove 91 prefix if present
+      phoneToSend = cleaned.substring(2);
+    } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+      // Remove 0 prefix if present
+      phoneToSend = cleaned.substring(1);
+    } else if (cleaned.length === 10) {
+      phoneToSend = cleaned;
+    } else {
+      // Take last 10 digits
+      phoneToSend = cleaned.slice(-10);
+    }
+
+    // Send exactly 10 digits without any prefix (e.g., 7014545341)
+    this.authService.sendOtp(phoneToSend).subscribe({
       next: () => {
         this.loading.set(false);
         this.step.set('otp');
@@ -196,9 +192,24 @@ export class PhoneLoginComponent implements OnDestroy {
     }
 
     this.loading.set(true);
-    const formattedPhone = this.formatPhoneNumber(this.phoneNumber());
 
-    this.authService.verifyOtp(formattedPhone, otpCode).subscribe({
+    // Extract exactly 10 digits for backend
+    const phone = this.phoneNumber();
+    const cleaned = phone.replace(/\D/g, '');
+    let phoneToSend = cleaned;
+
+    if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      phoneToSend = cleaned.substring(2);
+    } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
+      phoneToSend = cleaned.substring(1);
+    } else if (cleaned.length === 10) {
+      phoneToSend = cleaned;
+    } else {
+      phoneToSend = cleaned.slice(-10);
+    }
+
+    // Send exactly 10 digits without any prefix
+    this.authService.verifyOtp(phoneToSend, otpCode).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/dashboard']);
