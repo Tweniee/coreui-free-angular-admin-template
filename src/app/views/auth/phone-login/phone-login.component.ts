@@ -9,6 +9,13 @@ import {
   GridModule,
   SpinnerModule,
   AlertModule,
+  ContainerComponent,
+  RowComponent,
+  ColComponent,
+  CardGroupComponent,
+  CardBodyComponent,
+  InputGroupComponent,
+  InputGroupTextDirective,
 } from '@coreui/angular';
 import { IconModule } from '@coreui/icons-angular';
 import { AuthService } from '../../../services/auth.service';
@@ -27,6 +34,13 @@ import { environment } from '../../../../environments/environment';
     IconModule,
     SpinnerModule,
     AlertModule,
+    ContainerComponent,
+    RowComponent,
+    ColComponent,
+    CardGroupComponent,
+    CardBodyComponent,
+    InputGroupComponent,
+    InputGroupTextDirective,
   ],
   templateUrl: './phone-login.component.html',
   styleUrls: ['./phone-login.component.scss'],
@@ -38,6 +52,7 @@ export class PhoneLoginComponent implements OnDestroy {
   loading = signal(false);
   error = signal('');
   countdown = signal(0);
+  phoneInvalid = signal(false);
 
   readonly otpLength = environment.otp.length;
   readonly resendTimeout = environment.otp.resendTimeout;
@@ -63,14 +78,39 @@ export class PhoneLoginComponent implements OnDestroy {
     return '+91' + cleaned;
   }
 
+  isValidPhoneNumber(phone: string): boolean {
+    return environment.validation.phoneRegex.test(phone);
+  }
+
+  onPhoneInput() {
+    const phone = this.phoneNumber();
+    if (phone.length >= environment.validation.phoneMinLength) {
+      this.phoneInvalid.set(!this.isValidPhoneNumber(phone));
+    } else {
+      this.phoneInvalid.set(false);
+    }
+  }
+
   sendOtp() {
     this.error.set('');
     const phone = this.phoneNumber();
 
-    if (!phone || phone.length < 10) {
-      this.error.set('Please enter a valid phone number');
+    if (!phone || phone.length < environment.validation.phoneMinLength) {
+      this.error.set('Please enter a valid 10-digit mobile number');
+      this.phoneInvalid.set(true);
       return;
     }
+
+    // Validate using regex
+    if (!this.isValidPhoneNumber(phone)) {
+      this.error.set(
+        'Please enter a valid Indian mobile number (starting with 6-9)',
+      );
+      this.phoneInvalid.set(true);
+      return;
+    }
+
+    this.phoneInvalid.set(false);
 
     this.loading.set(true);
     const formattedPhone = this.formatPhoneNumber(phone);
