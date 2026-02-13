@@ -132,7 +132,7 @@ export class RolesComponent implements OnInit {
     return this.roles().filter(
       (role) =>
         role.name.toLowerCase().includes(term) ||
-        role.description.toLowerCase().includes(term),
+        (role.description && role.description.toLowerCase().includes(term)),
     );
   }
 
@@ -186,12 +186,20 @@ export class RolesComponent implements OnInit {
     return this.currentRole.permissions?.includes(permission) || false;
   }
 
+  formatRoleName(name: string): string {
+    if (!name) return '';
+    return name
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
   saveRole() {
     this.error.set('');
     this.success.set('');
 
-    if (!this.currentRole.name || !this.currentRole.description) {
-      this.error.set('Please fill in all required fields');
+    if (!this.currentRole.name) {
+      this.error.set('Please enter a role name');
       return;
     }
 

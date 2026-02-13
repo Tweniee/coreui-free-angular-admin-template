@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment';
 export interface Role {
   _id?: string;
   name: string;
-  description: string;
+  description?: string;
   permissions?: string[];
   isActive?: boolean;
   userCount?: number;
