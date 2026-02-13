@@ -13,12 +13,7 @@ import {
 } from '@coreui/angular';
 import { IconModule } from '@coreui/icons-angular';
 import { RolesService, Role } from '../../services/roles.service';
-
-interface Module {
-  name: string;
-  key: string;
-  icon: string;
-}
+import { ModulesService, Module } from '../../services/modules.service';
 
 @Component({
   selector: 'app-permissions',
@@ -41,17 +36,12 @@ interface Module {
 })
 export class PermissionsComponent implements OnInit {
   roles = signal<Role[]>([]);
+  modules = signal<Module[]>([]);
   selectedRole = signal<Role | null>(null);
   loading = signal(false);
   saving = signal(false);
   error = signal('');
   success = signal('');
-
-  modules: Module[] = [
-    { name: 'Members', key: 'members', icon: 'cilPeople' },
-    { name: 'Workouts', key: 'workouts', icon: 'cilSpeedometer' },
-    { name: 'Roles', key: 'roles', icon: 'cilShieldAlt' },
-  ];
 
   crudOperations = [
     { name: 'Create', key: 'create', icon: 'cilPlus' },
@@ -60,32 +50,52 @@ export class PermissionsComponent implements OnInit {
     { name: 'Delete', key: 'delete', icon: 'cilTrash' },
   ];
 
-  constructor(private rolesService: RolesService) {}
+  constructor(
+    private rolesService: RolesService,
+    private modulesService: ModulesService,
+  ) {}
 
   ngOnInit() {
-    this.loadRoles();
+    this.loadData();
   }
 
-  loadRoles() {
+  loadData() {
     this.loading.set(true);
     this.error.set('');
 
-    this.rolesService.getAllRoles().subscribe({
-      next: (roles) => {
-        this.roles.set(roles);
-        if (roles.length > 0 && !this.selectedRole()) {
+    // Load both roles and modules
+    Promise.all([
+      this.rolesService.getAllRoles().toPromise(),
+      this.modulesService.getAllModules().toPromise(),
+    ])
+      .then(([roles, modules]) => {
+        this.roles.set(roles || []);
+        // Filter only active modules and sort by order
+        const activeModules = (modules || [])
+          .filter((m) => m.isActive)
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
+        this.modules.set(activeModules);
+
+        if (roles && roles.length > 0 && !this.selectedRole()) {
           this.selectedRole.set(roles[0]);
         }
         this.loading.set(false);
-      },
-      error: (err) => {
+      })
+      .catch((err) => {
         this.loading.set(false);
-        this.error.set(err.error?.message || 'Failed to load roles');
-      },
-    });
+        this.error.set(err.error?.message || 'Failed to load data');
+      });
   }
 
   formatRoleName(name: string): string {
+    if (!name) return '';
+    return name
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  formatModuleName(name: string): string {
     if (!name) return '';
     return name
       .split('_')

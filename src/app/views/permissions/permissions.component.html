@@ -99,16 +99,16 @@
                 </tr>
               </thead>
               <tbody>
-                @for (module of modules; track module.key) {
+                @for (module of modules(); track module._id) {
                   <tr>
                     <td class="module-cell">
                       <div class="d-flex align-items-center">
                         <svg
                           cIcon
-                          [name]="module.icon"
+                          [name]="module.icon || 'cilLayers'"
                           class="me-2 text-primary"
                         ></svg>
-                        <strong>{{ module.name }}</strong>
+                        <strong>{{ formatModuleName(module.name) }}</strong>
                       </div>
                     </td>
                     @for (operation of crudOperations; track operation.key) {
@@ -117,10 +117,12 @@
                           <input
                             class="form-check-input"
                             type="checkbox"
-                            [id]="'perm-' + module.key + '-' + operation.key"
-                            [checked]="hasPermission(module.key, operation.key)"
+                            [id]="'perm-' + module.code + '-' + operation.key"
+                            [checked]="
+                              hasPermission(module.code, operation.key)
+                            "
                             (change)="
-                              togglePermission(module.key, operation.key)
+                              togglePermission(module.code, operation.key)
                             "
                           />
                         </div>
@@ -131,12 +133,12 @@
                         <input
                           class="form-check-input"
                           type="checkbox"
-                          [id]="'module-all-' + module.key"
-                          [checked]="isModuleFullySelected(module.key)"
+                          [id]="'module-all-' + module.code"
+                          [checked]="isModuleFullySelected(module.code)"
                           [indeterminate]="
-                            isModulePartiallySelected(module.key)
+                            isModulePartiallySelected(module.code)
                           "
-                          (change)="selectAllForModule(module.key)"
+                          (change)="selectAllForModule(module.code)"
                         />
                       </div>
                     </td>
