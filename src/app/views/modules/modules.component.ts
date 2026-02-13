@@ -63,47 +63,16 @@ export class ModulesComponent implements OnInit {
     this.loadModules();
   }
 
-  // Icon and color mappings based on index
-  private iconMap = [
-    'cilSpeedometer',
-    'cilPeople',
-    'cilShieldAlt',
-    'cilChart',
-    'cilCalendar',
-    'cilTask',
-    'cilSettings',
-    'cilBell',
-    'cilHome',
-    'cilFile',
-    'cilCreditCard',
-    'cilLayers',
-  ];
-
-  private colorMap = [
-    'primary',
-    'success',
-    'info',
-    'warning',
-    'danger',
-    'secondary',
-    'dark',
-  ];
-
   loadModules() {
     this.loading.set(true);
     this.error.set('');
 
     this.modulesService.getAllModules().subscribe({
       next: (modules) => {
-        // Sort by order and assign icons/colors based on index
-        const sortedModules = modules
-          .sort((a, b) => (a.order || 0) - (b.order || 0))
-          .map((module, index) => ({
-            ...module,
-            displayIcon:
-              module.icon || this.iconMap[index % this.iconMap.length],
-            displayColor: this.colorMap[index % this.colorMap.length],
-          }));
+        // Sort by order
+        const sortedModules = modules.sort(
+          (a, b) => (a.order || 0) - (b.order || 0),
+        );
         this.modules.set(sortedModules);
         this.loading.set(false);
       },
@@ -140,7 +109,6 @@ export class ModulesComponent implements OnInit {
       name: '',
       code: '',
       description: '',
-      icon: 'cilLayers',
       order: maxOrder + 1,
       isActive: true,
     };
@@ -177,28 +145,14 @@ export class ModulesComponent implements OnInit {
 
     if (this.isEditMode() && this.currentModule._id) {
       // Update existing module
-      const {
-        _id,
-        createdAt,
-        updatedAt,
-        displayIcon,
-        displayColor,
-        ...updateData
-      } = this.currentModule;
+      const { _id, createdAt, updatedAt, ...updateData } = this.currentModule;
       this.modulesService.updateModule(_id, updateData).subscribe({
         next: (updatedModule) => {
-          this.modules.update((modules) => {
-            const index = modules.findIndex((m) => m._id === updatedModule._id);
-            const moduleWithDisplay = {
-              ...updatedModule,
-              displayIcon:
-                updatedModule.icon || this.iconMap[index % this.iconMap.length],
-              displayColor: this.colorMap[index % this.colorMap.length],
-            };
-            return modules
-              .map((m) => (m._id === updatedModule._id ? moduleWithDisplay : m))
-              .sort((a, b) => (a.order || 0) - (b.order || 0));
-          });
+          this.modules.update((modules) =>
+            modules
+              .map((m) => (m._id === updatedModule._id ? updatedModule : m))
+              .sort((a, b) => (a.order || 0) - (b.order || 0)),
+          );
           this.loading.set(false);
           this.success.set('Module updated successfully');
           setTimeout(() => this.closeModal(), 1500);
@@ -210,25 +164,14 @@ export class ModulesComponent implements OnInit {
       });
     } else {
       // Create new module
-      const { createdAt, updatedAt, displayIcon, displayColor, ...createData } =
-        this.currentModule;
+      const { createdAt, updatedAt, ...createData } = this.currentModule;
       this.modulesService.createModule(createData).subscribe({
         next: (newModule) => {
-          this.modules.update((modules) => {
-            const newModules = [...modules, newModule].sort(
+          this.modules.update((modules) =>
+            [...modules, newModule].sort(
               (a, b) => (a.order || 0) - (b.order || 0),
-            );
-            const index = newModules.findIndex((m) => m._id === newModule._id);
-            const moduleWithDisplay = {
-              ...newModule,
-              displayIcon:
-                newModule.icon || this.iconMap[index % this.iconMap.length],
-              displayColor: this.colorMap[index % this.colorMap.length],
-            };
-            return newModules.map((m) =>
-              m._id === newModule._id ? moduleWithDisplay : m,
-            );
-          });
+            ),
+          );
           this.loading.set(false);
           this.success.set('Module created successfully');
           setTimeout(() => this.closeModal(), 1500);
@@ -270,7 +213,6 @@ export class ModulesComponent implements OnInit {
       name: '',
       code: '',
       description: '',
-      icon: 'cilLayers',
       order: 1,
       isActive: true,
     };
