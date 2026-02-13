@@ -14,7 +14,7 @@ export const environment = {
     userKey: 'currentUser',
   },
   otp: {
-    length: 6,
+    length: 4,
     resendTimeout: 30, // seconds
   },
   validation: {
