@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,6 +12,7 @@ import {
 } from '@coreui/angular';
 import { IconModule } from '@coreui/icons-angular';
 import { AuthService } from '../../../services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-phone-login',
@@ -30,13 +31,16 @@ import { AuthService } from '../../../services/auth.service';
   templateUrl: './phone-login.component.html',
   styleUrls: ['./phone-login.component.scss'],
 })
-export class PhoneLoginComponent {
+export class PhoneLoginComponent implements OnDestroy {
   step = signal<'phone' | 'otp'>('phone');
   phoneNumber = signal('');
-  otp = signal(['', '', '', '', '', '']);
+  otp = signal(new Array(environment.otp.length).fill(''));
   loading = signal(false);
   error = signal('');
   countdown = signal(0);
+
+  readonly otpLength = environment.otp.length;
+  readonly resendTimeout = environment.otp.resendTimeout;
 
   private countdownInterval: any;
 
@@ -98,14 +102,17 @@ export class PhoneLoginComponent {
     newOtp[index] = value;
     this.otp.set(newOtp);
 
-    if (value && index < 5) {
+    if (value && index < this.otpLength - 1) {
       const nextInput = document.getElementById(
         `otp-${index + 1}`,
       ) as HTMLInputElement;
       nextInput?.focus();
     }
 
-    if (newOtp.every((digit) => digit !== '') && newOtp.length === 6) {
+    if (
+      newOtp.every((digit) => digit !== '') &&
+      newOtp.length === this.otpLength
+    ) {
       this.verifyOtp();
     }
   }
@@ -122,9 +129,12 @@ export class PhoneLoginComponent {
   onOtpPaste(event: ClipboardEvent) {
     event.preventDefault();
     const pastedData = event.clipboardData?.getData('text') || '';
-    const digits = pastedData.replace(/\D/g, '').slice(0, 6).split('');
+    const digits = pastedData
+      .replace(/\D/g, '')
+      .slice(0, this.otpLength)
+      .split('');
 
-    if (digits.length === 6) {
+    if (digits.length === this.otpLength) {
       this.otp.set(digits);
       digits.forEach((digit, index) => {
         const input = document.getElementById(
@@ -140,7 +150,7 @@ export class PhoneLoginComponent {
     this.error.set('');
     const otpCode = this.otp().join('');
 
-    if (otpCode.length !== 6) {
+    if (otpCode.length !== this.otpLength) {
       this.error.set('Please enter complete OTP');
       return;
     }
@@ -156,7 +166,7 @@ export class PhoneLoginComponent {
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message || 'Invalid OTP. Please try again.');
-        this.otp.set(['', '', '', '', '', '']);
+        this.otp.set(new Array(this.otpLength).fill(''));
         const firstInput = document.getElementById('otp-0') as HTMLInputElement;
         firstInput?.focus();
       },
@@ -166,20 +176,20 @@ export class PhoneLoginComponent {
   resendOtp() {
     if (this.countdown() > 0) return;
 
-    this.otp.set(['', '', '', '', '', '']);
+    this.otp.set(new Array(this.otpLength).fill(''));
     this.error.set('');
     this.sendOtp();
   }
 
   backToPhone() {
     this.step.set('phone');
-    this.otp.set(['', '', '', '', '', '']);
+    this.otp.set(new Array(this.otpLength).fill(''));
     this.error.set('');
     this.stopCountdown();
   }
 
   private startCountdown() {
-    this.countdown.set(30);
+    this.countdown.set(this.resendTimeout);
     this.countdownInterval = setInterval(() => {
       const current = this.countdown();
       if (current > 0) {
@@ -198,5 +208,9 @@ export class PhoneLoginComponent {
 
   ngOnDestroy() {
     this.stopCountdown();
+  }
+
+  isOtpComplete(): boolean {
+    return this.otp().every((digit) => digit !== '');
   }
 }

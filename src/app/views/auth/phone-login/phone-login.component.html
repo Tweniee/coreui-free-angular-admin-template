@@ -167,7 +167,7 @@
                     color="primary"
                     size="lg"
                     (click)="verifyOtp()"
-                    [disabled]="loading() || otp().some(d => !d)"
+                    [disabled]="loading() || !isOtpComplete()"
                   >
                     @if (loading()) {
                       <c-spinner size="sm" class="me-2"></c-spinner>
