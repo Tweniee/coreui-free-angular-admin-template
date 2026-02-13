@@ -11,11 +11,11 @@
 
       &.module-column {
         min-width: 200px;
+        width: 250px;
       }
 
-      &.crud-column {
-        min-width: 100px;
-        width: 120px;
+      &.permissions-column {
+        min-width: 400px;
       }
 
       &.action-column {
@@ -54,6 +54,27 @@
 
       &:hover {
         border-color: var(--cui-primary);
+      }
+    }
+  }
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+
+  .permission-item {
+    .form-check {
+      .form-check-label {
+        cursor: pointer;
+        user-select: none;
+        font-size: 0.875rem;
+
+        &:hover {
+          color: var(--cui-primary);
+        }
       }
     }
   }

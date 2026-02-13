@@ -12,8 +12,13 @@ import {
   AlertModule,
 } from '@coreui/angular';
 import { IconModule } from '@coreui/icons-angular';
-import { RolesService, Role } from '../../services/roles.service';
-import { ModulesService, Module } from '../../services/modules.service';
+import {
+  RolesService,
+  Role,
+  RolePermissionsResponse,
+  ModulePermissions,
+  Permission,
+} from '../../services/roles.service';
 
 @Component({
   selector: 'app-permissions',
@@ -36,55 +41,102 @@ import { ModulesService, Module } from '../../services/modules.service';
 })
 export class PermissionsComponent implements OnInit {
   roles = signal<Role[]>([]);
-  modules = signal<Module[]>([]);
-  selectedRole = signal<Role | null>(null);
+  selectedRoleId = signal<string>('');
+  rolePermissions = signal<RolePermissionsResponse | null>(null);
   loading = signal(false);
   saving = signal(false);
   error = signal('');
   success = signal('');
 
-  crudOperations = [
-    { name: 'Create', key: 'create', icon: 'cilPlus' },
-    { name: 'Read', key: 'view', icon: 'cilSearch' },
-    { name: 'Update', key: 'update', icon: 'cilPencil' },
-    { name: 'Delete', key: 'delete', icon: 'cilTrash' },
+  // Define all possible CRUD+Export actions
+  allActions = [
+    { key: 'create', name: 'Create', icon: 'cilPlus' },
+    { key: 'read', name: 'Read', icon: 'cilSearch' },
+    { key: 'update', name: 'Update', icon: 'cilPencil' },
+    { key: 'delete', name: 'Delete', icon: 'cilTrash' },
+    { key: 'export', name: 'Export', icon: 'cilCloudDownload' },
   ];
 
-  constructor(
-    private rolesService: RolesService,
-    private modulesService: ModulesService,
-  ) {}
+  constructor(private rolesService: RolesService) {}
 
   ngOnInit() {
-    this.loadData();
+    this.loadRoles();
   }
 
-  loadData() {
+  loadRoles() {
     this.loading.set(true);
     this.error.set('');
 
-    // Load both roles and modules
-    Promise.all([
-      this.rolesService.getAllRoles().toPromise(),
-      this.modulesService.getAllModules().toPromise(),
-    ])
-      .then(([roles, modules]) => {
-        this.roles.set(roles || []);
-        // Filter only active modules and sort by order
-        const activeModules = (modules || [])
-          .filter((m) => m.isActive)
-          .sort((a, b) => (a.order || 0) - (b.order || 0));
-        this.modules.set(activeModules);
-
-        if (roles && roles.length > 0 && !this.selectedRole()) {
-          this.selectedRole.set(roles[0]);
+    this.rolesService.getAllRoles().subscribe({
+      next: (roles) => {
+        this.roles.set(roles);
+        if (roles.length > 0) {
+          this.selectedRoleId.set(roles[0]._id || '');
+          this.loadRolePermissions(roles[0]._id || '');
+        } else {
+          this.loading.set(false);
         }
+      },
+      error: (err) => {
         this.loading.set(false);
-      })
-      .catch((err) => {
+        this.error.set(err.error?.message || 'Failed to load roles');
+      },
+    });
+  }
+
+  loadRolePermissions(roleId: string) {
+    if (!roleId) return;
+
+    this.loading.set(true);
+    this.error.set('');
+
+    this.rolesService.getRolePermissions(roleId).subscribe({
+      next: (data) => {
+        // Ensure ALL modules have ALL 5 actions (create, read, update, delete, export)
+        const actionOrder = ['create', 'read', 'update', 'delete', 'export'];
+
+        const enhancedData = {
+          ...data,
+          modules: data.modules.map((module) => {
+            // Create a map of existing permissions by action
+            const permissionMap = new Map<string, Permission>();
+            module.permissions.forEach((p) => {
+              permissionMap.set(p.action.toLowerCase(), p);
+            });
+
+            // Ensure all 5 actions exist for every module
+            const allPermissions = actionOrder.map((action) => {
+              const existing = permissionMap.get(action);
+              if (existing) {
+                return existing;
+              } else {
+                // Create a placeholder permission for missing actions
+                return {
+                  permissionId: `${module.moduleId}-${action}`,
+                  name: `${action.charAt(0).toUpperCase() + action.slice(1)} ${module.moduleName}`,
+                  action: action,
+                  code: `${module.moduleCode}.${action}`,
+                  description: `Ability to ${action} ${module.moduleName.toLowerCase()}`,
+                  isGranted: false,
+                };
+              }
+            });
+
+            return {
+              ...module,
+              permissions: allPermissions,
+            };
+          }),
+        };
+
+        this.rolePermissions.set(enhancedData);
         this.loading.set(false);
-        this.error.set(err.error?.message || 'Failed to load data');
-      });
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || 'Failed to load permissions');
+      },
+    });
   }
 
   formatRoleName(name: string): string {
@@ -106,100 +158,77 @@ export class PermissionsComponent implements OnInit {
   onRoleChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     const roleId = select.value;
-    const role = this.roles().find((r) => r._id === roleId);
-    if (role) {
-      this.selectedRole.set(role);
-    }
+    this.selectedRoleId.set(roleId);
+    this.loadRolePermissions(roleId);
   }
 
-  hasPermission(module: string, operation: string): boolean {
-    const role = this.selectedRole();
-    if (!role) return false;
-    const permission = `${module}.${operation}`;
-    return role.permissions?.includes(permission) || false;
+  selectAllForModule(module: ModulePermissions) {
+    const allGranted = module.permissions.every((p) => p.isGranted);
+    module.permissions.forEach((p) => {
+      p.isGranted = !allGranted;
+    });
   }
 
-  togglePermission(module: string, operation: string) {
-    const role = this.selectedRole();
-    if (!role) return;
-
-    const permission = `${module}.${operation}`;
-    const permissions = role.permissions || [];
-    const index = permissions.indexOf(permission);
-
-    if (index > -1) {
-      permissions.splice(index, 1);
-    } else {
-      permissions.push(permission);
-    }
-
-    role.permissions = [...permissions];
-    this.selectedRole.set({ ...role });
+  isModuleFullySelected(module: ModulePermissions): boolean {
+    return module.permissions.every((p) => p.isGranted);
   }
 
-  selectAllForModule(module: string) {
-    const role = this.selectedRole();
-    if (!role) return;
-
-    const modulePermissions = this.crudOperations.map(
-      (op) => `${module}.${op.key}`,
-    );
-    const permissions = role.permissions || [];
-    const allSelected = modulePermissions.every((p) => permissions.includes(p));
-
-    if (allSelected) {
-      // Deselect all
-      role.permissions = permissions.filter(
-        (p) => !modulePermissions.includes(p),
-      );
-    } else {
-      // Select all
-      const newPermissions = [...permissions];
-      modulePermissions.forEach((p) => {
-        if (!newPermissions.includes(p)) {
-          newPermissions.push(p);
-        }
-      });
-      role.permissions = newPermissions;
-    }
-
-    this.selectedRole.set({ ...role });
+  isModulePartiallySelected(module: ModulePermissions): boolean {
+    const granted = module.permissions.filter((p) => p.isGranted);
+    return granted.length > 0 && granted.length < module.permissions.length;
   }
 
-  isModuleFullySelected(module: string): boolean {
-    return this.crudOperations.every((op) =>
-      this.hasPermission(module, op.key),
-    );
+  getActionIcon(action: string): string {
+    const iconMap: { [key: string]: string } = {
+      create: 'cilPlus',
+      read: 'cilSearch',
+      view: 'cilSearch',
+      update: 'cilPencil',
+      delete: 'cilTrash',
+      export: 'cilCloudDownload',
+    };
+    return iconMap[action.toLowerCase()] || 'cilCheckCircle';
   }
 
-  isModulePartiallySelected(module: string): boolean {
-    const selected = this.crudOperations.filter((op) =>
-      this.hasPermission(module, op.key),
-    );
-    return selected.length > 0 && selected.length < this.crudOperations.length;
+  getActionName(action: string): string {
+    const nameMap: { [key: string]: string } = {
+      create: 'Create',
+      read: 'Read',
+      view: 'Read',
+      update: 'Update',
+      delete: 'Delete',
+      export: 'Export',
+    };
+    return nameMap[action.toLowerCase()] || action;
   }
 
   savePermissions() {
-    const role = this.selectedRole();
-    if (!role || !role._id) return;
+    const roleId = this.selectedRoleId();
+    const permissions = this.rolePermissions();
+
+    if (!roleId || !permissions) return;
 
     this.saving.set(true);
     this.error.set('');
     this.success.set('');
 
+    // Collect all granted permission codes
+    const grantedPermissions: string[] = [];
+    permissions.modules.forEach((module) => {
+      module.permissions.forEach((permission) => {
+        if (permission.isGranted) {
+          grantedPermissions.push(permission.code);
+        }
+      });
+    });
+
     this.rolesService
-      .updateRole(role._id, { permissions: role.permissions })
+      .updateRolePermissions(roleId, grantedPermissions)
       .subscribe({
         next: () => {
-          // Update the role in the roles array
-          this.roles.update((roles) =>
-            roles.map((r) =>
-              r._id === role._id ? { ...r, permissions: role.permissions } : r,
-            ),
-          );
           this.saving.set(false);
           this.success.set(
-            `Permissions updated for ${this.formatRoleName(role.name)}`,
+            `Permissions updated for ${this.formatRoleName(permissions.roleName)}`,
           );
           setTimeout(() => this.success.set(''), 3000);
         },

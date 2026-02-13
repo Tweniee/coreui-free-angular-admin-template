@@ -14,7 +14,7 @@
       <label cLabel class="mb-0 text-nowrap">Select Role:</label>
       <select
         cSelect
-        [value]="selectedRole()?._id || ''"
+        [value]="selectedRoleId()"
         (change)="onRoleChange($event)"
         [disabled]="loading()"
         class="flex-grow-1"
@@ -28,11 +28,11 @@
 </c-row>
 
 <!-- Loading State -->
-@if (loading() && roles().length === 0) {
+@if (loading() && !rolePermissions()) {
   <c-row>
     <c-col xs="12" class="text-center py-5">
       <c-spinner color="primary"></c-spinner>
-      <p class="mt-3 text-body-secondary">Loading roles...</p>
+      <p class="mt-3 text-body-secondary">Loading permissions...</p>
     </c-col>
   </c-row>
 }
@@ -70,7 +70,7 @@
 }
 
 <!-- Permissions Table -->
-@if (selectedRole() && !loading()) {
+@if (rolePermissions() && !loading()) {
   <c-row>
     <c-col xs="12">
       <c-card>
@@ -85,60 +85,77 @@
                       <strong>Module</strong>
                     </div>
                   </th>
-                  @for (operation of crudOperations; track operation.key) {
-                    <th scope="col" class="text-center crud-column">
-                      <div class="d-flex flex-column align-items-center">
-                        <svg cIcon [name]="operation.icon" class="mb-1"></svg>
-                        <strong>{{ operation.name }}</strong>
-                      </div>
-                    </th>
-                  }
+                  <th scope="col" class="permissions-column">
+                    <strong>Permissions</strong>
+                  </th>
                   <th scope="col" class="text-center action-column">
                     <strong>All</strong>
                   </th>
                 </tr>
               </thead>
               <tbody>
-                @for (module of modules(); track module._id) {
+                @for (
+                  module of rolePermissions()!.modules;
+                  track module.moduleId
+                ) {
                   <tr>
                     <td class="module-cell">
                       <div class="d-flex align-items-center">
                         <svg
                           cIcon
-                          [name]="module.icon || 'cilLayers'"
+                          [name]="module.moduleIcon || 'cilLayers'"
                           class="me-2 text-primary"
                         ></svg>
-                        <strong>{{ formatModuleName(module.name) }}</strong>
+                        <strong>{{
+                          formatModuleName(module.moduleName)
+                        }}</strong>
                       </div>
                     </td>
-                    @for (operation of crudOperations; track operation.key) {
-                      <td class="text-center">
-                        <div class="form-check d-flex justify-content-center">
-                          <input
-                            class="form-check-input"
-                            type="checkbox"
-                            [id]="'perm-' + module.code + '-' + operation.key"
-                            [checked]="
-                              hasPermission(module.code, operation.key)
-                            "
-                            (change)="
-                              togglePermission(module.code, operation.key)
-                            "
-                          />
-                        </div>
-                      </td>
-                    }
+                    <td>
+                      <div class="permissions-grid">
+                        @for (
+                          permission of module.permissions;
+                          track permission.permissionId
+                        ) {
+                          <div class="permission-item">
+                            <div class="form-check">
+                              <input
+                                class="form-check-input"
+                                type="checkbox"
+                                [id]="'perm-' + permission.permissionId"
+                                [(ngModel)]="permission.isGranted"
+                                [name]="'perm-' + permission.permissionId"
+                              />
+                              <label
+                                class="form-check-label"
+                                [for]="'perm-' + permission.permissionId"
+                              >
+                                <div class="d-flex align-items-center">
+                                  <svg
+                                    cIcon
+                                    [name]="getActionIcon(permission.action)"
+                                    size="sm"
+                                    class="me-2"
+                                  ></svg>
+                                  <span>{{
+                                    getActionName(permission.action)
+                                  }}</span>
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </td>
                     <td class="text-center">
                       <div class="form-check d-flex justify-content-center">
                         <input
                           class="form-check-input"
                           type="checkbox"
-                          [id]="'module-all-' + module.code"
-                          [checked]="isModuleFullySelected(module.code)"
-                          [indeterminate]="
-                            isModulePartiallySelected(module.code)
-                          "
-                          (change)="selectAllForModule(module.code)"
+                          [id]="'module-all-' + module.moduleId"
+                          [checked]="isModuleFullySelected(module)"
+                          [indeterminate]="isModulePartiallySelected(module)"
+                          (change)="selectAllForModule(module)"
                         />
                       </div>
                     </td>

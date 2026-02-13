@@ -16,11 +16,36 @@ export interface Role {
   updatedAt?: string;
 }
 
+export interface Permission {
+  permissionId: string;
+  name: string;
+  action: string;
+  code: string;
+  description?: string;
+  isGranted: boolean;
+}
+
+export interface ModulePermissions {
+  moduleId: string;
+  moduleName: string;
+  moduleCode: string;
+  moduleIcon?: string;
+  moduleOrder: number;
+  permissions: Permission[];
+}
+
+export interface RolePermissionsResponse {
+  roleId: string;
+  roleName: string;
+  modules: ModulePermissions[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class RolesService {
   private apiUrl = `${environment.apiUrl}${environment.apiEndpoints.roles}`;
+  private permissionsUrl = `${environment.apiUrl}/permissions`;
 
   constructor(private http: HttpClient) {}
 
@@ -42,5 +67,20 @@ export class RolesService {
 
   deleteRole(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getRolePermissions(roleId: string): Observable<RolePermissionsResponse> {
+    return this.http.get<RolePermissionsResponse>(
+      `${this.permissionsUrl}/role/${roleId}`,
+    );
+  }
+
+  updateRolePermissions(
+    roleId: string,
+    permissionCodes: string[],
+  ): Observable<Role> {
+    return this.http.put<Role>(`${this.apiUrl}/${roleId}`, {
+      permissions: permissionCodes,
+    });
   }
 }
