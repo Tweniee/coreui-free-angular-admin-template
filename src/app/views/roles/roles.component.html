@@ -158,7 +158,9 @@
                     >{{ role.userCount }} users</span
                   >
                 </div>
-                <c-badge [color]="role.color">{{ role.color }}</c-badge>
+                <c-badge [color]="role.isActive ? 'success' : 'secondary'">
+                  {{ role.isActive ? "Active" : "Inactive" }}
+                </c-badge>
               </div>
             </c-card-body>
           </c-card>
@@ -222,7 +224,11 @@
                       </div>
                     </td>
                     <td>
-                      <c-badge [color]="role.color">{{ role.color }}</c-badge>
+                      <c-badge
+                        [color]="role.isActive ? 'success' : 'secondary'"
+                      >
+                        {{ role.isActive ? "Active" : "Inactive" }}
+                      </c-badge>
                     </td>
                     <td>
                       <button
