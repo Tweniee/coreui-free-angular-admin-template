@@ -52,27 +52,10 @@ export class ModulesComponent implements OnInit {
     name: '',
     code: '',
     description: '',
-    icon: 'cilLayers',
     order: 1,
     isActive: true,
   };
   moduleToDelete: Module | null = null;
-
-  // Available icons for modules
-  availableIcons = [
-    'cilSpeedometer',
-    'cilPeople',
-    'cilShieldAlt',
-    'cilLayers',
-    'cilSettings',
-    'cilChart',
-    'cilCalendar',
-    'cilTask',
-    'cilBell',
-    'cilHome',
-    'cilFile',
-    'cilCreditCard',
-  ];
 
   constructor(private modulesService: ModulesService) {}
 

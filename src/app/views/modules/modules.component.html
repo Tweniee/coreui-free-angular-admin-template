@@ -100,17 +100,7 @@
               <div
                 class="d-flex justify-content-between align-items-start mb-3"
               >
-                <div
-                  class="module-icon"
-                  [ngClass]="'bg-' + module.displayColor + '-subtle'"
-                >
-                  <svg
-                    cIcon
-                    [name]="module.displayIcon || 'cilLayers'"
-                    size="xl"
-                    [ngClass]="'text-' + module.displayColor"
-                  ></svg>
-                </div>
+                <h5 class="mb-0">{{ formatModuleName(module.name) }}</h5>
                 <c-dropdown alignment="end" variant="btn-group">
                   <button cButton color="ghost" size="sm" cDropdownToggle>
                     <svg cIcon name="cilOptions"></svg>
@@ -136,8 +126,6 @@
                   </ul>
                 </c-dropdown>
               </div>
-
-              <h5 class="mb-2">{{ formatModuleName(module.name) }}</h5>
               <p class="text-body-secondary small mb-2">
                 <strong>Code:</strong> {{ module.code }}
               </p>
@@ -181,7 +169,6 @@
             <table cTable [hover]="true" class="mb-0">
               <thead>
                 <tr>
-                  <th scope="col" style="width: 50px"></th>
                   <th scope="col">Module Name</th>
                   <th scope="col">Code</th>
                   <th scope="col">Description</th>
@@ -193,19 +180,6 @@
               <tbody>
                 @for (module of filteredModules; track module._id) {
                   <tr>
-                    <td>
-                      <div
-                        class="module-icon-small"
-                        [ngClass]="'bg-' + module.displayColor + '-subtle'"
-                      >
-                        <svg
-                          cIcon
-                          [name]="module.displayIcon || 'cilLayers'"
-                          size="lg"
-                          [ngClass]="'text-' + module.displayColor"
-                        ></svg>
-                      </div>
-                    </td>
                     <td>
                       <strong>{{ formatModuleName(module.name) }}</strong>
                     </td>
@@ -371,21 +345,6 @@
             placeholder="Describe the module"
             [disabled]="loading()"
           ></textarea>
-        </div>
-
-        <div class="mb-3">
-          <label cLabel for="moduleIcon">Icon</label>
-          <select
-            cSelect
-            id="moduleIcon"
-            [(ngModel)]="currentModule.icon"
-            name="icon"
-            [disabled]="loading()"
-          >
-            @for (icon of availableIcons; track icon) {
-              <option [value]="icon">{{ icon }}</option>
-            }
-          </select>
         </div>
 
         <div class="mb-3">
