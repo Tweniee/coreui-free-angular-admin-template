@@ -1,0 +1,81 @@
+.permissions-table {
+  thead {
+    background-color: var(--cui-table-bg);
+    border-bottom: 2px solid var(--cui-border-color);
+
+    th {
+      font-weight: 600;
+      padding: 1.25rem 1rem;
+      vertical-align: middle;
+      white-space: nowrap;
+
+      &.module-column {
+        min-width: 200px;
+      }
+
+      &.crud-column {
+        min-width: 100px;
+        width: 120px;
+      }
+
+      &.action-column {
+        min-width: 80px;
+        width: 100px;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      &:hover {
+        background-color: var(--cui-table-hover-bg);
+      }
+
+      td {
+        vertical-align: middle;
+        padding: 1rem;
+
+        &.module-cell {
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .form-check {
+    margin-bottom: 0;
+    min-height: auto;
+
+    .form-check-input {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+      margin: 0;
+
+      &:hover {
+        border-color: var(--cui-primary);
+      }
+    }
+  }
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+// Role selector styling
+select.form-select {
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--cui-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--cui-primary-rgb), 0.25);
+  }
+}
+
+// Card footer styling
+.card-footer {
+  background-color: var(--cui-card-cap-bg);
+  border-top: 1px solid var(--cui-border-color);
+  padding: 1rem 1.25rem;
+}

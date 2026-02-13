@@ -81,6 +81,16 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'permissions',
+        loadComponent: () =>
+          import('./views/permissions/permissions.component').then(
+            (m) => m.PermissionsComponent,
+          ),
+        data: {
+          title: 'Permissions',
+        },
+      },
+      {
         path: 'pages',
         loadChildren: () =>
           import('./views/pages/routes').then((m) => m.routes),
