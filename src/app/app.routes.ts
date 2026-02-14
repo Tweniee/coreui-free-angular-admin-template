@@ -169,6 +169,16 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'attendance',
+        loadComponent: () =>
+          import('./views/attendance/attendance.component').then(
+            (m) => m.AttendanceComponent,
+          ),
+        data: {
+          title: 'Attendance',
+        },
+      },
+      {
         path: 'pages',
         loadChildren: () =>
           import('./views/pages/routes').then((m) => m.routes),

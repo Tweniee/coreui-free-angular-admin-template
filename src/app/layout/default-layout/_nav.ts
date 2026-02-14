@@ -51,4 +51,9 @@ export const navItems: INavData[] = [
     url: '/expenses',
     iconComponent: { name: 'cil-wallet' },
   },
+  {
+    name: 'Attendance',
+    url: '/attendance',
+    iconComponent: { name: 'cil-calendar' },
+  },
 ];
