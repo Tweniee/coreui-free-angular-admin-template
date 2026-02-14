@@ -32,44 +32,6 @@
   </c-col>
 </c-row>
 
-<!-- Statistics Cards -->
-@if (stats()) {
-  <c-row class="mb-4">
-    <c-col xs="12" sm="6" lg="3" class="mb-3 mb-lg-0">
-      <c-card class="text-center">
-        <c-card-body>
-          <div class="text-body-secondary small mb-1">Total Assignments</div>
-          <h3 class="mb-0">{{ stats()!.totalAssignments }}</h3>
-        </c-card-body>
-      </c-card>
-    </c-col>
-    <c-col xs="12" sm="6" lg="3" class="mb-3 mb-lg-0">
-      <c-card class="text-center border-success">
-        <c-card-body>
-          <div class="text-body-secondary small mb-1">Active</div>
-          <h3 class="mb-0 text-success">{{ stats()!.activeAssignments }}</h3>
-        </c-card-body>
-      </c-card>
-    </c-col>
-    <c-col xs="12" sm="6" lg="3" class="mb-3 mb-sm-0">
-      <c-card class="text-center border-info">
-        <c-card-body>
-          <div class="text-body-secondary small mb-1">Completed</div>
-          <h3 class="mb-0 text-info">{{ stats()!.completedAssignments }}</h3>
-        </c-card-body>
-      </c-card>
-    </c-col>
-    <c-col xs="12" sm="6" lg="3">
-      <c-card class="text-center border-danger">
-        <c-card-body>
-          <div class="text-body-secondary small mb-1">Cancelled</div>
-          <h3 class="mb-0 text-danger">{{ stats()!.cancelledAssignments }}</h3>
-        </c-card-body>
-      </c-card>
-    </c-col>
-  </c-row>
-}
-
 <!-- Loading State -->
 @if (loading() && assignments().length === 0) {
   <c-row>
@@ -490,22 +452,33 @@
             <label cLabel for="member"
               >Member <span class="text-danger">*</span></label
             >
-            <select
-              cSelect
-              id="member"
-              [(ngModel)]="selectedMemberId"
-              name="member"
-              [disabled]="loading() || isEditMode()"
-            >
-              <option value="">Select Member</option>
-              @for (member of members(); track member._id) {
-                <option [value]="member._id">
-                  {{ member.profile?.fullName || member.phoneNumber }} -
-                  {{ member.phoneNumber }}
-                </option>
-              }
-            </select>
-            @if (isEditMode()) {
+            @if (!isEditMode()) {
+              <select
+                cSelect
+                id="member"
+                [(ngModel)]="selectedMemberId"
+                name="member"
+                [disabled]="loading()"
+              >
+                <option value="">Select Member</option>
+                @for (member of members(); track member._id) {
+                  <option [value]="member._id">
+                    {{ member.profile?.fullName || member.phoneNumber }} -
+                    {{ member.phoneNumber }}
+                  </option>
+                }
+              </select>
+            } @else {
+              <input
+                cFormControl
+                type="text"
+                [value]="
+                  currentAssignment.member?.profile?.fullName ||
+                  currentAssignment.member?.phoneNumber ||
+                  ''
+                "
+                [disabled]="true"
+              />
               <small class="text-body-secondary">
                 Member cannot be changed after creation
               </small>

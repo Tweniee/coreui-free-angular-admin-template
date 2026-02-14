@@ -19,7 +19,6 @@ import {
   MemberTrainerAssignmentsService,
   Assignment,
   User,
-  AssignmentStats,
 } from '../../services/member-trainer-assignments.service';
 
 @Component({
@@ -48,12 +47,15 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
   assignments = signal<Assignment[]>([]);
   trainers = signal<User[]>([]);
   members = signal<User[]>([]);
-  stats = signal<AssignmentStats | null>(null);
 
   viewMode = signal<'grid' | 'list'>('grid');
   searchTerm = signal('');
   statusFilter = signal<string>('');
   trainerFilter = signal<string>('');
+
+  // Dropdown search terms
+  memberSearchTerm = signal('');
+  trainerSearchTerm = signal('');
 
   modalVisible = signal(false);
   deleteModalVisible = signal(false);
@@ -86,9 +88,7 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
 
   ngOnInit() {
     this.loadAssignments();
-    this.loadTrainers();
-    this.loadMembers();
-    this.loadStats();
+    this.loadUnassignedData();
   }
 
   loadAssignments() {
@@ -116,35 +116,32 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
       });
   }
 
-  loadTrainers() {
-    this.assignmentsService.getTrainers().subscribe({
+  loadUnassignedData() {
+    this.assignmentsService.getUnassignedMembersAndTrainers().subscribe({
       next: (response) => {
-        this.trainers.set(response.data);
+        // Transform to User format for component compatibility
+        this.trainers.set(
+          response.trainers.map((trainer) => ({
+            _id: trainer._id,
+            phoneNumber: trainer.phoneNumber,
+            profile: {
+              fullName: trainer.fullName,
+              email: trainer.email,
+            },
+          })),
+        );
+        this.members.set(
+          response.unassignedMembers.map((member) => ({
+            _id: member._id,
+            phoneNumber: member.phoneNumber,
+            profile: {
+              fullName: member.fullName,
+            },
+          })),
+        );
       },
       error: (err) => {
-        console.error('Failed to load trainers:', err);
-      },
-    });
-  }
-
-  loadMembers() {
-    this.assignmentsService.getMembers().subscribe({
-      next: (response) => {
-        this.members.set(response.data);
-      },
-      error: (err) => {
-        console.error('Failed to load members:', err);
-      },
-    });
-  }
-
-  loadStats() {
-    this.assignmentsService.getStats().subscribe({
-      next: (stats) => {
-        this.stats.set(stats);
-      },
-      error: (err) => {
-        console.error('Failed to load stats:', err);
+        console.error('Failed to load unassigned data:', err);
       },
     });
   }
@@ -159,6 +156,28 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
         assignment.trainer.profile?.fullName?.toLowerCase().includes(term) ||
         assignment.member.phoneNumber.includes(term) ||
         assignment.trainer.phoneNumber.includes(term),
+    );
+  }
+
+  get filteredMembers() {
+    const term = this.memberSearchTerm().toLowerCase();
+    if (!term) return this.members();
+
+    return this.members().filter(
+      (member) =>
+        member.profile?.fullName?.toLowerCase().includes(term) ||
+        member.phoneNumber.includes(term),
+    );
+  }
+
+  get filteredTrainers() {
+    const term = this.trainerSearchTerm().toLowerCase();
+    if (!term) return this.trainers();
+
+    return this.trainers().filter(
+      (trainer) =>
+        trainer.profile?.fullName?.toLowerCase().includes(term) ||
+        trainer.phoneNumber.includes(term),
     );
   }
 
@@ -186,8 +205,12 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
     };
     this.selectedMemberId = '';
     this.selectedTrainerId = '';
+    this.memberSearchTerm.set('');
+    this.trainerSearchTerm.set('');
     this.error.set('');
     this.success.set('');
+    // Reload unassigned members and trainers when opening create modal
+    this.loadUnassignedData();
     this.modalVisible.set(true);
   }
 
@@ -234,10 +257,9 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
         .updateAssignment(this.currentAssignment._id, updateData)
         .subscribe({
           next: (updatedAssignment) => {
-            this.loadAssignments(); // Reload to get fresh data
+            this.loadAssignments();
             this.loading.set(false);
             this.success.set('Assignment updated successfully');
-            this.loadStats();
             setTimeout(() => this.closeModal(), 1500);
           },
           error: (err) => {
@@ -257,7 +279,6 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
           this.loadAssignments();
           this.loading.set(false);
           this.success.set('Assignment created successfully');
-          this.loadStats();
           setTimeout(() => this.closeModal(), 1500);
         },
         error: (err) => {
@@ -283,7 +304,6 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
           );
           this.loading.set(false);
           this.success.set('Assignment deleted successfully');
-          this.loadStats();
           setTimeout(() => this.closeDeleteModal(), 1500);
         },
         error: (err) => {
@@ -369,6 +389,5 @@ export class MemberTrainerAssignmentsComponent implements OnInit {
 
   refreshData() {
     this.loadAssignments();
-    this.loadStats();
   }
 }

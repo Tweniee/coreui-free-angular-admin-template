@@ -63,6 +63,7 @@ export class UsersService {
     page: number = 1,
     limit: number = 10,
     search?: string,
+    role?: string,
   ): Observable<UsersResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -70,6 +71,10 @@ export class UsersService {
 
     if (search) {
       params = params.set('search', search);
+    }
+
+    if (role) {
+      params = params.set('role', role);
     }
 
     return this.http.get<UsersResponse>(this.apiUrl, { params });

@@ -18,6 +18,31 @@ export interface User {
   };
 }
 
+// Response for unassigned members and trainers
+export interface UnassignedMember {
+  _id: string;
+  memberCode: string;
+  fullName: string;
+  phoneNumber: string;
+  status: string;
+}
+
+export interface TrainerInfo {
+  _id: string;
+  fullName: string;
+  phoneNumber: string;
+  email?: string;
+}
+
+export interface UnassignedResponse {
+  unassignedMembers: UnassignedMember[];
+  trainers: TrainerInfo[];
+  summary: {
+    totalUnassignedMembers: number;
+    totalTrainers: number;
+  };
+}
+
 export interface Member {
   _id: string;
   memberCode: string;
@@ -99,18 +124,6 @@ export interface AssignmentResponse {
     total: number;
     totalPages: number;
   };
-}
-
-export interface AssignmentStats {
-  totalAssignments: number;
-  activeAssignments: number;
-  completedAssignments: number;
-  cancelledAssignments: number;
-  assignmentsByTrainer?: Array<{
-    trainerId: string;
-    trainerName: string;
-    count: number;
-  }>;
 }
 
 @Injectable({
@@ -224,15 +237,38 @@ export class MemberTrainerAssignmentsService {
     );
   }
 
-  getStats(): Observable<AssignmentStats> {
-    return this.http.get<AssignmentStats>(`${this.apiUrl}/stats`);
+  // GET unassigned members and trainers
+  getUnassignedMembersAndTrainers(): Observable<UnassignedResponse> {
+    return this.http.get<UnassignedResponse>(`${this.apiUrl}/unassigned`);
   }
 
+  // Legacy methods - kept for backward compatibility but use getUnassignedMembersAndTrainers instead
   getTrainers(): Observable<{ data: User[] }> {
-    return this.http.get<{ data: User[] }>(`${this.usersUrl}/trainers`);
+    return this.getUnassignedMembersAndTrainers().pipe(
+      map((response) => ({
+        data: response.trainers.map((trainer) => ({
+          _id: trainer._id,
+          phoneNumber: trainer.phoneNumber,
+          profile: {
+            fullName: trainer.fullName,
+            email: trainer.email,
+          },
+        })),
+      })),
+    );
   }
 
   getMembers(): Observable<{ data: User[] }> {
-    return this.http.get<{ data: User[] }>(`${this.usersUrl}/members`);
+    return this.getUnassignedMembersAndTrainers().pipe(
+      map((response) => ({
+        data: response.unassignedMembers.map((member) => ({
+          _id: member._id,
+          phoneNumber: member.phoneNumber,
+          profile: {
+            fullName: member.fullName,
+          },
+        })),
+      })),
+    );
   }
 }
