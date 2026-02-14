@@ -67,8 +67,20 @@
     </select>
   </c-col>
   <c-col xs="12" md="2" class="mb-3 mb-md-0">
+    <select
+      cSelect
+      [(ngModel)]="bodyPartFilter"
+      (ngModelChange)="applyFilters()"
+    >
+      <option [value]="undefined">All Body Parts</option>
+      @for (bodyPart of bodyParts(); track bodyPart.id) {
+        <option [value]="bodyPart.id">{{ bodyPart.name }}</option>
+      }
+    </select>
+  </c-col>
+  <c-col xs="12" md="1" class="mb-3 mb-md-0">
     <button cButton color="light" (click)="clearFilters()" class="w-100">
-      Clear Filters
+      Clear
     </button>
   </c-col>
 </c-row>
@@ -94,8 +106,7 @@
               <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Level</th>
-                <th scope="col">Equipment</th>
-                <th scope="col">Primary Muscles</th>
+                <th scope="col">Body Parts</th>
                 <th scope="col">Category</th>
                 <th scope="col" style="width: 120px">Actions</th>
               </tr>
@@ -111,11 +122,16 @@
                       {{ exercise.level }}
                     </c-badge>
                   </td>
-                  <td>{{ exercise.equipment || "None" }}</td>
                   <td>
-                    <small>{{
-                      (exercise.primaryMuscles || []).join(", ") || "N/A"
-                    }}</small>
+                    @if (exercise.bodyParts && exercise.bodyParts.length > 0) {
+                      @for (bodyPart of exercise.bodyParts; track bodyPart.id) {
+                        <c-badge color="secondary" class="me-1">{{
+                          bodyPart.name
+                        }}</c-badge>
+                      }
+                    } @else {
+                      <small class="text-body-secondary">N/A</small>
+                    }
                   </td>
                   <td>{{ exercise.category || "N/A" }}</td>
                   <td>
@@ -125,8 +141,9 @@
                       size="sm"
                       class="me-1"
                       (click)="openDetailsModal(exercise)"
+                      title="View Details"
                     >
-                      <svg cIcon name="cilInfo"></svg>
+                      <svg cIcon name="cilNotes"></svg>
                     </button>
                     <button
                       cButton
@@ -134,6 +151,7 @@
                       size="sm"
                       class="me-1"
                       (click)="openEditModal(exercise)"
+                      title="Edit"
                     >
                       <svg cIcon name="cilPencil"></svg>
                     </button>
@@ -142,6 +160,7 @@
                       color="ghost"
                       size="sm"
                       (click)="openDeleteModal(exercise)"
+                      title="Delete"
                     >
                       <svg cIcon name="cilTrash" class="text-danger"></svg>
                     </button>
@@ -245,141 +264,243 @@
     }
 
     <form>
-      <c-row>
-        <c-col xs="12" md="6">
-          <div class="mb-3">
-            <label cLabel for="id"
-              >Exercise ID <span class="text-danger">*</span></label
-            >
-            <input
-              cFormControl
-              id="id"
-              type="text"
-              [(ngModel)]="currentExercise.id"
-              name="id"
-              placeholder="e.g., custom-deadlift-1"
-              [disabled]="loading() || isEditMode()"
-            />
-            @if (isEditMode()) {
-              <small class="text-body-secondary">ID cannot be changed</small>
+      <!-- Basic Information Section -->
+      <c-card class="mb-3">
+        <c-card-header>
+          <strong>Basic Information</strong>
+        </c-card-header>
+        <c-card-body>
+          <c-row>
+            <c-col xs="12">
+              <div class="mb-3">
+                <label cLabel for="name"
+                  >Exercise Name <span class="text-danger">*</span></label
+                >
+                <input
+                  cFormControl
+                  id="name"
+                  type="text"
+                  [(ngModel)]="currentExercise.name"
+                  name="name"
+                  placeholder="e.g., Romanian Deadlift"
+                  [disabled]="loading()"
+                />
+              </div>
+            </c-col>
+          </c-row>
+
+          <c-row>
+            <c-col xs="12" md="4">
+              <div class="mb-3">
+                <label cLabel for="level"
+                  >Level <span class="text-danger">*</span></label
+                >
+                <select
+                  cSelect
+                  id="level"
+                  [(ngModel)]="currentExercise.level"
+                  name="level"
+                  [disabled]="loading()"
+                >
+                  @for (level of levels; track level) {
+                    <option [value]="level">{{ level }}</option>
+                  }
+                </select>
+              </div>
+            </c-col>
+            <c-col xs="12" md="4">
+              <div class="mb-3">
+                <label cLabel for="category">Category</label>
+                <select
+                  cSelect
+                  id="category"
+                  [(ngModel)]="currentExercise.category"
+                  name="category"
+                  [disabled]="loading()"
+                >
+                  <option value="">Select Category</option>
+                  @for (category of categories; track category) {
+                    <option [value]="category">{{ category }}</option>
+                  }
+                </select>
+              </div>
+            </c-col>
+            <c-col xs="12" md="4">
+              <div class="mb-3">
+                <label cLabel for="equipment">Equipment</label>
+                <input
+                  cFormControl
+                  id="equipment"
+                  type="text"
+                  [(ngModel)]="currentExercise.equipment"
+                  name="equipment"
+                  placeholder="e.g., barbell"
+                  [disabled]="loading()"
+                />
+              </div>
+            </c-col>
+          </c-row>
+        </c-card-body>
+      </c-card>
+
+      <!-- Muscles Section -->
+      <c-card class="mb-3">
+        <c-card-header>
+          <strong>Target Muscles</strong>
+        </c-card-header>
+        <c-card-body>
+          <c-row>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="primaryMuscles">Primary Muscles</label>
+                <input
+                  cFormControl
+                  id="primaryMuscles"
+                  type="text"
+                  [(ngModel)]="primaryMusclesInput"
+                  name="primaryMuscles"
+                  placeholder="e.g., hamstrings, glutes"
+                  [disabled]="loading()"
+                />
+                <small class="text-body-secondary">Comma-separated</small>
+              </div>
+            </c-col>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="secondaryMuscles">Secondary Muscles</label>
+                <input
+                  cFormControl
+                  id="secondaryMuscles"
+                  type="text"
+                  [(ngModel)]="secondaryMusclesInput"
+                  name="secondaryMuscles"
+                  placeholder="e.g., lower back, traps"
+                  [disabled]="loading()"
+                />
+                <small class="text-body-secondary">Comma-separated</small>
+              </div>
+            </c-col>
+          </c-row>
+        </c-card-body>
+      </c-card>
+
+      <!-- Body Parts Section -->
+      <c-card class="mb-3">
+        <c-card-header>
+          <strong>Body Parts</strong>
+        </c-card-header>
+        <c-card-body>
+          <div class="d-flex flex-wrap gap-2">
+            @for (bodyPart of bodyParts(); track bodyPart.id) {
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'bodyPart' + bodyPart.id"
+                  [checked]="isBodyPartSelected(bodyPart.id)"
+                  (change)="toggleBodyPart(bodyPart.id)"
+                  [disabled]="loading()"
+                />
+                <label
+                  class="form-check-label"
+                  [for]="'bodyPart' + bodyPart.id"
+                >
+                  {{ bodyPart.name }}
+                </label>
+              </div>
             }
           </div>
-        </c-col>
-        <c-col xs="12" md="6">
-          <div class="mb-3">
-            <label cLabel for="name"
-              >Exercise Name <span class="text-danger">*</span></label
-            >
-            <input
+          <small class="text-body-secondary d-block mt-2"
+            >Select one or more body parts</small
+          >
+        </c-card-body>
+      </c-card>
+
+      <!-- Instructions Section -->
+      <c-card class="mb-3">
+        <c-card-header>
+          <strong>Exercise Instructions</strong>
+        </c-card-header>
+        <c-card-body>
+          <div class="mb-0">
+            <label cLabel for="instructions">Step-by-step Instructions</label>
+            <textarea
               cFormControl
-              id="name"
-              type="text"
-              [(ngModel)]="currentExercise.name"
-              name="name"
-              placeholder="e.g., Romanian Deadlift"
+              id="instructions"
+              rows="5"
+              [(ngModel)]="instructionsInput"
+              name="instructions"
+              placeholder="Stand with feet hip-width apart&#10;Hold barbell with overhand grip&#10;Keep back straight and hinge at hips"
               [disabled]="loading()"
-            />
+            ></textarea>
+            <small class="text-body-secondary">One instruction per line</small>
           </div>
-        </c-col>
-      </c-row>
+        </c-card-body>
+      </c-card>
 
-      <c-row>
-        <c-col xs="12" md="6">
-          <div class="mb-3">
-            <label cLabel for="level"
-              >Level <span class="text-danger">*</span></label
-            >
-            <select
-              cSelect
-              id="level"
-              [(ngModel)]="currentExercise.level"
-              name="level"
-              [disabled]="loading()"
-            >
-              @for (level of levels; track level) {
-                <option [value]="level">{{ level }}</option>
-              }
-            </select>
-          </div>
-        </c-col>
-        <c-col xs="12" md="6">
-          <div class="mb-3">
-            <label cLabel for="equipment">Equipment</label>
-            <input
-              cFormControl
-              id="equipment"
-              type="text"
-              [(ngModel)]="currentExercise.equipment"
-              name="equipment"
-              placeholder="e.g., barbell"
-              [disabled]="loading()"
-            />
-          </div>
-        </c-col>
-      </c-row>
-
-      <c-row>
-        <c-col xs="12" md="6">
-          <div class="mb-3">
-            <label cLabel for="category">Category</label>
-            <select
-              cSelect
-              id="category"
-              [(ngModel)]="currentExercise.category"
-              name="category"
-              [disabled]="loading()"
-            >
-              <option value="">Select Category</option>
-              @for (category of categories; track category) {
-                <option [value]="category">{{ category }}</option>
-              }
-            </select>
-          </div>
-        </c-col>
-      </c-row>
-
-      <div class="mb-3">
-        <label cLabel for="primaryMuscles"
-          >Primary Muscles (comma-separated)</label
-        >
-        <input
-          cFormControl
-          id="primaryMuscles"
-          type="text"
-          [(ngModel)]="primaryMusclesInput"
-          name="primaryMuscles"
-          placeholder="e.g., hamstrings, glutes"
-          [disabled]="loading()"
-        />
-      </div>
-
-      <div class="mb-3">
-        <label cLabel for="secondaryMuscles"
-          >Secondary Muscles (comma-separated)</label
-        >
-        <input
-          cFormControl
-          id="secondaryMuscles"
-          type="text"
-          [(ngModel)]="secondaryMusclesInput"
-          name="secondaryMuscles"
-          placeholder="e.g., lower back, traps"
-          [disabled]="loading()"
-        />
-      </div>
-
-      <div class="mb-3">
-        <label cLabel for="instructions">Instructions (one per line)</label>
-        <textarea
-          cFormControl
-          id="instructions"
-          rows="5"
-          [(ngModel)]="instructionsInput"
-          name="instructions"
-          placeholder="Stand with feet hip-width apart&#10;Hold barbell with overhand grip&#10;Keep back straight and hinge at hips"
-          [disabled]="loading()"
-        ></textarea>
-      </div>
+      <!-- Images Section (Create Mode Only) -->
+      @if (!isEditMode()) {
+        <c-card class="mb-0">
+          <c-card-header>
+            <strong>Exercise Images</strong>
+          </c-card-header>
+          <c-card-body>
+            <div class="mb-3">
+              <label cLabel for="images">Upload Images</label>
+              <input
+                cFormControl
+                type="file"
+                id="images"
+                accept="image/*"
+                multiple
+                (change)="onFileSelect($event)"
+                [disabled]="loading()"
+              />
+              <small class="text-body-secondary">
+                Select one or more images
+              </small>
+            </div>
+            @if (selectedFiles.length > 0) {
+              <div class="border rounded p-2 bg-light">
+                <small class="d-block mb-2"
+                  ><strong
+                    >{{ selectedFiles.length }} file(s) selected</strong
+                  ></small
+                >
+                @for (file of selectedFiles; track $index) {
+                  <div
+                    class="d-flex align-items-center justify-content-between bg-white p-2 rounded border mb-2"
+                  >
+                    <div class="d-flex align-items-center">
+                      <svg
+                        cIcon
+                        name="cilImage"
+                        class="me-2 text-primary"
+                        size="sm"
+                      ></svg>
+                      <small class="text-truncate">{{ file.name }}</small>
+                    </div>
+                    <button
+                      cButton
+                      color="ghost"
+                      size="sm"
+                      (click)="removeFile($index)"
+                      [disabled]="loading()"
+                    >
+                      <svg
+                        cIcon
+                        name="cilX"
+                        class="text-danger"
+                        size="sm"
+                      ></svg>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </c-card-body>
+        </c-card>
+      }
     </form>
   </c-modal-body>
   <c-modal-footer>
@@ -476,127 +597,163 @@
   </c-modal-header>
   <c-modal-body>
     @if (selectedExercise) {
-      <c-row class="mb-3">
-        <c-col xs="12">
-          <h4>{{ selectedExercise.name }}</h4>
-        </c-col>
-      </c-row>
+      <!-- Exercise Header -->
+      <div class="mb-3">
+        <h4 class="mb-2">{{ selectedExercise.name }}</h4>
+        <div class="d-flex align-items-center gap-2">
+          <c-badge [color]="getLevelColor(selectedExercise.level)">
+            {{ selectedExercise.level }}
+          </c-badge>
+          @if (selectedExercise.category) {
+            <c-badge color="info">
+              {{ selectedExercise.category }}
+            </c-badge>
+          }
+        </div>
+      </div>
 
+      <!-- Images Section (if available) -->
+      @if (selectedExercise.images && selectedExercise.images.length > 0) {
+        <div class="mb-3">
+          <h6 class="mb-2">
+            <svg cIcon name="cilImage" class="me-1"></svg>
+            Exercise Demonstration
+          </h6>
+          <c-row class="g-2">
+            @for (image of selectedExercise.images; track image) {
+              <c-col xs="12" md="6">
+                <img
+                  [src]="getImageUrl(image)"
+                  [alt]="selectedExercise.name"
+                  class="img-fluid rounded"
+                  style="max-height: 200px; width: 100%; object-fit: cover"
+                />
+              </c-col>
+            }
+          </c-row>
+        </div>
+      }
+
+      <!-- Basic Information & Muscles in compact layout -->
       <c-row class="mb-3">
         <c-col xs="12" md="6">
-          <c-card class="h-100">
-            <c-card-body>
-              <h6 class="text-body-secondary mb-3">Basic Information</h6>
-              <div class="mb-2">
-                <small class="text-body-secondary">Level:</small>
-                <div>
+          <h6 class="mb-2">
+            <svg cIcon name="cilInfo" class="me-1"></svg>
+            Basic Information
+          </h6>
+          <table class="table table-sm table-borderless mb-0">
+            <tbody>
+              <tr>
+                <td class="text-body-secondary ps-0" style="width: 40%">
+                  Level:
+                </td>
+                <td class="pe-0">
                   <c-badge [color]="getLevelColor(selectedExercise.level)">
                     {{ selectedExercise.level }}
                   </c-badge>
-                </div>
-              </div>
+                </td>
+              </tr>
               @if (selectedExercise.category) {
-                <div class="mb-2">
-                  <small class="text-body-secondary">Category:</small>
-                  <div>{{ selectedExercise.category }}</div>
-                </div>
+                <tr>
+                  <td class="text-body-secondary ps-0">Category:</td>
+                  <td class="pe-0">{{ selectedExercise.category }}</td>
+                </tr>
               }
               @if (selectedExercise.equipment) {
-                <div class="mb-2">
-                  <small class="text-body-secondary">Equipment:</small>
-                  <div>{{ selectedExercise.equipment }}</div>
-                </div>
+                <tr>
+                  <td class="text-body-secondary ps-0">Equipment:</td>
+                  <td class="pe-0">{{ selectedExercise.equipment }}</td>
+                </tr>
               }
               @if (selectedExercise.force) {
-                <div class="mb-2">
-                  <small class="text-body-secondary">Force:</small>
-                  <div>{{ selectedExercise.force }}</div>
-                </div>
+                <tr>
+                  <td class="text-body-secondary ps-0">Force:</td>
+                  <td class="pe-0 text-capitalize">
+                    {{ selectedExercise.force }}
+                  </td>
+                </tr>
               }
               @if (selectedExercise.mechanic) {
-                <div class="mb-2">
-                  <small class="text-body-secondary">Mechanic:</small>
-                  <div>{{ selectedExercise.mechanic }}</div>
-                </div>
+                <tr>
+                  <td class="text-body-secondary ps-0">Mechanic:</td>
+                  <td class="pe-0 text-capitalize">
+                    {{ selectedExercise.mechanic }}
+                  </td>
+                </tr>
               }
-            </c-card-body>
-          </c-card>
-        </c-col>
-        <c-col xs="12" md="6">
-          <c-card class="h-100">
-            <c-card-body>
-              <h6 class="text-body-secondary mb-3">Muscles</h6>
-              <div class="mb-2">
-                <small class="text-body-secondary">Primary Muscles:</small>
-                <div>
-                  @for (
-                    muscle of selectedExercise.primaryMuscles;
-                    track muscle
-                  ) {
-                    <c-badge color="primary" class="me-1">{{ muscle }}</c-badge>
-                  }
-                </div>
-              </div>
               @if (
-                selectedExercise.secondaryMuscles &&
-                selectedExercise.secondaryMuscles.length > 0
+                selectedExercise.bodyParts &&
+                selectedExercise.bodyParts.length > 0
               ) {
-                <div class="mb-2">
-                  <small class="text-body-secondary">Secondary Muscles:</small>
-                  <div>
+                <tr>
+                  <td class="text-body-secondary ps-0">Body Parts:</td>
+                  <td class="pe-0">
                     @for (
-                      muscle of selectedExercise.secondaryMuscles;
-                      track muscle
+                      bodyPart of selectedExercise.bodyParts;
+                      track bodyPart.id
                     ) {
-                      <c-badge color="secondary" class="me-1">{{
-                        muscle
+                      <c-badge color="info" class="me-1">{{
+                        bodyPart.name
                       }}</c-badge>
                     }
-                  </div>
-                </div>
+                  </td>
+                </tr>
               }
-            </c-card-body>
-          </c-card>
+            </tbody>
+          </table>
+        </c-col>
+        <c-col xs="12" md="6">
+          <h6 class="mb-2">
+            <svg cIcon name="cilFeaturedPlaylist" class="me-1"></svg>
+            Target Muscles
+          </h6>
+          <div class="mb-2">
+            <small class="text-body-secondary d-block mb-1">Primary:</small>
+            <div class="d-flex flex-wrap gap-1">
+              @for (muscle of selectedExercise.primaryMuscles; track muscle) {
+                <c-badge color="primary" class="text-capitalize">
+                  {{ muscle }}
+                </c-badge>
+              }
+            </div>
+          </div>
+          @if (
+            selectedExercise.secondaryMuscles &&
+            selectedExercise.secondaryMuscles.length > 0
+          ) {
+            <div>
+              <small class="text-body-secondary d-block mb-1">Secondary:</small>
+              <div class="d-flex flex-wrap gap-1">
+                @for (
+                  muscle of selectedExercise.secondaryMuscles;
+                  track muscle
+                ) {
+                  <c-badge color="secondary" class="text-capitalize">
+                    {{ muscle }}
+                  </c-badge>
+                }
+              </div>
+            </div>
+          }
         </c-col>
       </c-row>
 
+      <!-- Instructions Section -->
       @if (
         selectedExercise.instructions &&
         selectedExercise.instructions.length > 0
       ) {
-        <c-card class="mb-3">
-          <c-card-body>
-            <h6 class="text-body-secondary mb-3">Instructions</h6>
-            <ol class="mb-0">
-              @for (
-                instruction of selectedExercise.instructions;
-                track $index
-              ) {
-                <li class="mb-2">{{ instruction }}</li>
-              }
-            </ol>
-          </c-card-body>
-        </c-card>
-      }
-
-      @if (selectedExercise.images && selectedExercise.images.length > 0) {
-        <c-card>
-          <c-card-body>
-            <h6 class="text-body-secondary mb-3">Images</h6>
-            <c-row>
-              @for (image of selectedExercise.images; track image) {
-                <c-col xs="12" md="6" class="mb-3">
-                  <img
-                    [src]="getImageUrl(image)"
-                    [alt]="selectedExercise.name"
-                    class="img-fluid rounded"
-                    style="max-height: 300px; object-fit: cover; width: 100%"
-                  />
-                </c-col>
-              }
-            </c-row>
-          </c-card-body>
-        </c-card>
+        <div class="mb-0">
+          <h6 class="mb-2">
+            <svg cIcon name="cilList" class="me-1"></svg>
+            How to Perform
+          </h6>
+          <ol class="mb-0 ps-3">
+            @for (instruction of selectedExercise.instructions; track $index) {
+              <li class="mb-2">{{ instruction }}</li>
+            }
+          </ol>
+        </div>
       }
     }
   </c-modal-body>

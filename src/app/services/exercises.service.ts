@@ -3,6 +3,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface BodyPart {
+  id: number;
+  name: string;
+}
+
 export interface Exercise {
   _id?: string;
   id: string;
@@ -16,15 +21,10 @@ export interface Exercise {
   force?: string;
   mechanic?: string;
   images?: string[];
+  bodyParts?: BodyPart[];
+  bodyPartIds?: number[];
   createdAt?: string;
   updatedAt?: string;
-}
-
-export interface BodyPart {
-  _id: string;
-  id: number;
-  name: string;
-  createdAt: string;
 }
 
 export interface MusclesByBodyPart {
@@ -71,6 +71,7 @@ export class ExercisesService {
     search?: string,
     level?: string,
     category?: string,
+    bodyPartId?: number,
   ): Observable<ExercisesResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -79,6 +80,7 @@ export class ExercisesService {
     if (search) params = params.set('search', search);
     if (level) params = params.set('level', level);
     if (category) params = params.set('category', category);
+    if (bodyPartId) params = params.set('bodyPartId', bodyPartId.toString());
 
     return this.http.get<ExercisesResponse>(this.apiUrl, { params });
   }
@@ -91,6 +93,23 @@ export class ExercisesService {
     exercise: Omit<Exercise, '_id' | 'createdAt' | 'updatedAt'>,
   ): Observable<Exercise> {
     return this.http.post<Exercise>(this.apiUrl, exercise);
+  }
+
+  createExerciseWithFiles(
+    exercise: Omit<Exercise, '_id' | 'createdAt' | 'updatedAt'>,
+    files: File[],
+  ): Observable<Exercise> {
+    const formData = new FormData();
+
+    // Append exercise data as JSON
+    formData.append('data', JSON.stringify(exercise));
+
+    // Append files
+    files.forEach((file) => {
+      formData.append('images', file, file.name);
+    });
+
+    return this.http.post<Exercise>(this.apiUrl, formData);
   }
 
   updateExercise(

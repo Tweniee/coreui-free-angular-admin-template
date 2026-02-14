@@ -13,7 +13,11 @@ import {
   AlertModule,
 } from '@coreui/angular';
 import { IconModule } from '@coreui/icons-angular';
-import { ExercisesService, Exercise } from '../../services/exercises.service';
+import {
+  ExercisesService,
+  Exercise,
+  BodyPart,
+} from '../../services/exercises.service';
 
 @Component({
   selector: 'app-exercises',
@@ -37,10 +41,12 @@ import { ExercisesService, Exercise } from '../../services/exercises.service';
 })
 export class ExercisesComponent implements OnInit {
   exercises = signal<Exercise[]>([]);
+  bodyParts = signal<BodyPart[]>([]);
 
   searchTerm = signal('');
   levelFilter = signal('');
   categoryFilter = signal('');
+  bodyPartFilter = signal<number | undefined>(undefined);
 
   modalVisible = signal(false);
   deleteModalVisible = signal(false);
@@ -64,11 +70,14 @@ export class ExercisesComponent implements OnInit {
     secondaryMuscles: [],
     instructions: [],
     category: '',
+    bodyPartIds: [],
   };
 
   primaryMusclesInput = '';
   secondaryMusclesInput = '';
   instructionsInput = '';
+  selectedFiles: File[] = [];
+  selectedBodyPartIds: number[] = [];
 
   exerciseToDelete: Exercise | null = null;
   selectedExercise: Exercise | null = null;
@@ -97,6 +106,18 @@ export class ExercisesComponent implements OnInit {
 
   ngOnInit() {
     this.loadExercises();
+    this.loadBodyParts();
+  }
+
+  loadBodyParts() {
+    this.exercisesService.getBodyParts().subscribe({
+      next: (bodyParts) => {
+        this.bodyParts.set(bodyParts);
+      },
+      error: (err) => {
+        console.error('Failed to load body parts:', err);
+      },
+    });
   }
 
   loadExercises() {
@@ -110,6 +131,7 @@ export class ExercisesComponent implements OnInit {
         this.searchTerm(),
         this.levelFilter(),
         this.categoryFilter(),
+        this.bodyPartFilter(),
       )
       .subscribe({
         next: (response) => {
@@ -139,6 +161,7 @@ export class ExercisesComponent implements OnInit {
     this.searchTerm.set('');
     this.levelFilter.set('');
     this.categoryFilter.set('');
+    this.bodyPartFilter.set(undefined);
     this.currentPage.set(1);
     this.loadExercises();
   }
@@ -154,13 +177,27 @@ export class ExercisesComponent implements OnInit {
       secondaryMuscles: [],
       instructions: [],
       category: '',
+      bodyPartIds: [],
     };
     this.primaryMusclesInput = '';
     this.secondaryMusclesInput = '';
     this.instructionsInput = '';
+    this.selectedFiles = [];
+    this.selectedBodyPartIds = [];
     this.error.set('');
     this.success.set('');
     this.modalVisible.set(true);
+  }
+
+  onFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.selectedFiles = Array.from(input.files);
+    }
+  }
+
+  removeFile(index: number) {
+    this.selectedFiles.splice(index, 1);
   }
 
   openEditModal(exercise: Exercise) {
@@ -169,6 +206,7 @@ export class ExercisesComponent implements OnInit {
     this.primaryMusclesInput = exercise.primaryMuscles?.join(', ') || '';
     this.secondaryMusclesInput = exercise.secondaryMuscles?.join(', ') || '';
     this.instructionsInput = exercise.instructions?.join('\n') || '';
+    this.selectedBodyPartIds = exercise.bodyPartIds || [];
     this.error.set('');
     this.success.set('');
     this.modalVisible.set(true);
@@ -194,6 +232,19 @@ export class ExercisesComponent implements OnInit {
         this.error.set(err.error?.message || 'Failed to load exercise details');
       },
     });
+  }
+
+  toggleBodyPart(bodyPartId: number) {
+    const index = this.selectedBodyPartIds.indexOf(bodyPartId);
+    if (index > -1) {
+      this.selectedBodyPartIds.splice(index, 1);
+    } else {
+      this.selectedBodyPartIds.push(bodyPartId);
+    }
+  }
+
+  isBodyPartSelected(bodyPartId: number): boolean {
+    return this.selectedBodyPartIds.includes(bodyPartId);
   }
 
   saveExercise() {
@@ -222,6 +273,9 @@ export class ExercisesComponent implements OnInit {
       .map((i) => i.trim())
       .filter((i) => i.length > 0);
 
+    // Set body part IDs
+    this.currentExercise.bodyPartIds = this.selectedBodyPartIds;
+
     this.loading.set(true);
 
     if (this.isEditMode() && this.currentExercise._id) {
@@ -240,25 +294,34 @@ export class ExercisesComponent implements OnInit {
           },
         });
     } else {
-      this.exercisesService
-        .createExercise(
-          this.currentExercise as Omit<
-            Exercise,
-            '_id' | 'createdAt' | 'updatedAt'
-          >,
-        )
-        .subscribe({
-          next: () => {
-            this.loadExercises();
-            this.loading.set(false);
-            this.success.set('Exercise created successfully');
-            setTimeout(() => this.closeModal(), 1500);
-          },
-          error: (err) => {
-            this.loading.set(false);
-            this.error.set(err.error?.message || 'Failed to create exercise');
-          },
-        });
+      const createObservable =
+        this.selectedFiles.length > 0
+          ? this.exercisesService.createExerciseWithFiles(
+              this.currentExercise as Omit<
+                Exercise,
+                '_id' | 'createdAt' | 'updatedAt'
+              >,
+              this.selectedFiles,
+            )
+          : this.exercisesService.createExercise(
+              this.currentExercise as Omit<
+                Exercise,
+                '_id' | 'createdAt' | 'updatedAt'
+              >,
+            );
+
+      createObservable.subscribe({
+        next: () => {
+          this.loadExercises();
+          this.loading.set(false);
+          this.success.set('Exercise created successfully');
+          setTimeout(() => this.closeModal(), 1500);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.error.set(err.error?.message || 'Failed to create exercise');
+        },
+      });
     }
   }
 
@@ -295,10 +358,13 @@ export class ExercisesComponent implements OnInit {
       secondaryMuscles: [],
       instructions: [],
       category: '',
+      bodyPartIds: [],
     };
     this.primaryMusclesInput = '';
     this.secondaryMusclesInput = '';
     this.instructionsInput = '';
+    this.selectedFiles = [];
+    this.selectedBodyPartIds = [];
     this.error.set('');
     this.success.set('');
   }
