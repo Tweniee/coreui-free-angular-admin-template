@@ -50,28 +50,9 @@ export class RolesComponent implements OnInit {
 
   currentRole: Partial<Role> = {
     name: '',
-    description: '',
-    permissions: [],
     isActive: true,
-    color: 'primary',
   };
   roleToDelete: Role | null = null;
-
-  // Available permissions
-  availablePermissions = [
-    'members.view',
-    'members.create',
-    'members.update',
-    'members.delete',
-    'workouts.view',
-    'workouts.create',
-    'workouts.update',
-    'workouts.delete',
-    'roles.view',
-    'roles.create',
-    'roles.update',
-    'roles.delete',
-  ];
 
   constructor(private rolesService: RolesService) {}
 
@@ -144,10 +125,7 @@ export class RolesComponent implements OnInit {
     this.isEditMode.set(false);
     this.currentRole = {
       name: '',
-      description: '',
-      permissions: [],
       isActive: true,
-      color: 'primary',
     };
     this.error.set('');
     this.success.set('');
@@ -167,19 +145,6 @@ export class RolesComponent implements OnInit {
     this.error.set('');
     this.success.set('');
     this.deleteModalVisible.set(true);
-  }
-
-  togglePermission(permission: string) {
-    const permissions = this.currentRole.permissions || [];
-    const index = permissions.indexOf(permission);
-
-    if (index > -1) {
-      permissions.splice(index, 1);
-    } else {
-      permissions.push(permission);
-    }
-
-    this.currentRole.permissions = [...permissions];
   }
 
   hasPermission(permission: string): boolean {
@@ -284,10 +249,7 @@ export class RolesComponent implements OnInit {
     this.modalVisible.set(false);
     this.currentRole = {
       name: '',
-      description: '',
-      permissions: [],
       isActive: true,
-      color: 'primary',
     };
     this.error.set('');
     this.success.set('');

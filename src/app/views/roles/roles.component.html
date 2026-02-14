@@ -318,75 +318,19 @@
       }
 
       <form>
-        <c-row>
-          <c-col xs="12" md="8">
-            <div class="mb-3">
-              <label cLabel for="roleName"
-                >Role Name <span class="text-danger">*</span></label
-              >
-              <input
-                cFormControl
-                id="roleName"
-                type="text"
-                [(ngModel)]="currentRole.name"
-                name="name"
-                placeholder="Enter role name"
-                [disabled]="loading()"
-              />
-            </div>
-          </c-col>
-          <c-col xs="12" md="4">
-            <div class="mb-3">
-              <label cLabel for="roleColor">Badge Color</label>
-              <select
-                cSelect
-                id="roleColor"
-                [(ngModel)]="currentRole.color"
-                name="color"
-                [disabled]="loading()"
-              >
-                <option value="primary">Primary</option>
-                <option value="success">Success</option>
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="danger">Danger</option>
-              </select>
-            </div>
-          </c-col>
-        </c-row>
-
         <div class="mb-3">
-          <label cLabel for="roleDescription">Description</label>
-          <textarea
+          <label cLabel for="roleName"
+            >Role Name <span class="text-danger">*</span></label
+          >
+          <input
             cFormControl
-            id="roleDescription"
-            rows="3"
-            [(ngModel)]="currentRole.description"
-            name="description"
-            placeholder="Describe the role and its permissions"
+            id="roleName"
+            type="text"
+            [(ngModel)]="currentRole.name"
+            name="name"
+            placeholder="Enter role name"
             [disabled]="loading()"
-          ></textarea>
-        </div>
-
-        <div class="mb-3">
-          <label cLabel class="d-block mb-2">Permissions</label>
-          <div class="permissions-grid">
-            @for (permission of availablePermissions; track permission) {
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  [id]="'perm-' + permission"
-                  [checked]="hasPermission(permission)"
-                  (change)="togglePermission(permission)"
-                  [disabled]="loading()"
-                />
-                <label class="form-check-label" [for]="'perm-' + permission">
-                  {{ permission }}
-                </label>
-              </div>
-            }
-          </div>
+          />
         </div>
 
         <div class="mb-3">
