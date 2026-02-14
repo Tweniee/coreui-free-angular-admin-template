@@ -31,4 +31,9 @@ export const navItems: INavData[] = [
     url: '/membership-plans',
     iconComponent: { name: 'cil-tags' },
   },
+  {
+    name: 'Trainer Assignments',
+    url: '/member-trainer-assignments',
+    iconComponent: { name: 'cil-user-follow' },
+  },
 ];

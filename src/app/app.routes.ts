@@ -129,6 +129,16 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'member-trainer-assignments',
+        loadComponent: () =>
+          import('./views/member-trainer-assignments/member-trainer-assignments.component').then(
+            (m) => m.MemberTrainerAssignmentsComponent,
+          ),
+        data: {
+          title: 'Member-Trainer Assignments',
+        },
+      },
+      {
         path: 'pages',
         loadChildren: () =>
           import('./views/pages/routes').then((m) => m.routes),

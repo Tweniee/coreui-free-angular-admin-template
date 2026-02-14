@@ -1,0 +1,25 @@
+.assignment-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+c-avatar {
+  flex-shrink: 0;
+}
+
+.border-success {
+  border-left: 4px solid var(--cui-success) !important;
+}
+
+.border-info {
+  border-left: 4px solid var(--cui-info) !important;
+}
+
+.border-danger {
+  border-left: 4px solid var(--cui-danger) !important;
+}
