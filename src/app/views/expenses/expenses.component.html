@@ -1,0 +1,730 @@
+<!-- Page Header -->
+<c-row class="mb-4">
+  <c-col>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="mb-1">
+          <svg cIcon name="cilWallet" class="me-2" style="color: #667eea"></svg>
+          Expenses Management
+        </h2>
+        <p class="text-body-secondary mb-0">
+          <svg cIcon name="cilInfo" size="sm" class="me-1"></svg>
+          Track and manage gym expenses
+        </p>
+      </div>
+      <button
+        cButton
+        color="primary"
+        (click)="openCreateModal()"
+        [disabled]="loading()"
+      >
+        <svg cIcon name="cilPlus" class="me-2"></svg>
+        Add Expense
+      </button>
+    </div>
+  </c-col>
+</c-row>
+
+<!-- Total Expense Card -->
+<c-row class="mb-4">
+  <c-col xs="12">
+    <c-card class="total-expense-card">
+      <c-card-body>
+        <c-row class="align-items-center">
+          <c-col xs="12" md="8">
+            <div class="d-flex align-items-center">
+              <div class="total-expense-icon">
+                <svg cIcon name="cilMoney" size="3xl"></svg>
+              </div>
+              <div class="ms-4">
+                <div class="total-expense-label">Total Expenses</div>
+                <div class="total-expense-amount">
+                  ₹{{ totalExpenseAmount().toLocaleString("en-IN") }}
+                </div>
+                @if (expenseStats()) {
+                  <div class="total-expense-subtitle">
+                    Across
+                    {{ expenseStats().byCategory?.length || 0 }} categories
+                  </div>
+                }
+              </div>
+            </div>
+          </c-col>
+          <c-col xs="12" md="4" class="mt-3 mt-md-0">
+            @if (
+              expenseStats()?.byCategory && expenseStats().byCategory.length > 0
+            ) {
+              <div class="category-breakdown">
+                <div class="category-breakdown-title">Top Categories</div>
+                @for (
+                  cat of expenseStats().byCategory.slice(0, 3);
+                  track cat.category
+                ) {
+                  <div class="category-breakdown-item">
+                    <div
+                      class="d-flex justify-content-between align-items-center"
+                    >
+                      <span class="category-name">{{ cat.category }}</span>
+                      <span class="category-amount"
+                        >₹{{ cat.totalAmount.toLocaleString("en-IN") }}</span
+                      >
+                    </div>
+                    <div class="category-count">
+                      {{ cat.count }} expense{{ cat.count > 1 ? "s" : "" }}
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </c-col>
+        </c-row>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
+
+<!-- Stats Cards -->
+@if (expenses().length > 0) {
+  <c-row class="mb-4">
+    <c-col xs="12" md="4">
+      <c-card class="stats-card">
+        <c-card-body>
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-primary-subtle">
+              <svg cIcon name="cilList" style="color: #667eea"></svg>
+            </div>
+            <div class="ms-3">
+              <div class="stats-value">{{ totalExpenses() }}</div>
+              <div class="stats-label">Total Expenses</div>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+    <c-col xs="12" md="4">
+      <c-card class="stats-card">
+        <c-card-body>
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-success-subtle">
+              <svg cIcon name="cilMoney" style="color: #10b981"></svg>
+            </div>
+            <div class="ms-3">
+              <div class="stats-value">₹{{ getTotalAmount() }}</div>
+              <div class="stats-label">Total Amount</div>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+    <c-col xs="12" md="4">
+      <c-card class="stats-card">
+        <c-card-body>
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-info-subtle">
+              <svg cIcon name="cilCalendar" style="color: #3b82f6"></svg>
+            </div>
+            <div class="ms-3">
+              <div class="stats-value">
+                {{ getCurrentMonth() }}
+              </div>
+              <div class="stats-label">Current Month</div>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+}
+
+<!-- Loading State -->
+@if (loading() && expenses().length === 0) {
+  <c-row>
+    <c-col xs="12" class="text-center py-5">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-3 text-body-secondary">Loading expenses...</p>
+    </c-col>
+  </c-row>
+}
+
+<!-- Error State -->
+@if (error() && expenses().length === 0) {
+  <c-row>
+    <c-col xs="12">
+      <c-alert
+        color="danger"
+        [dismissible]="true"
+        (visibleChange)="!$event && error.set('')"
+      >
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        {{ error() }}
+      </c-alert>
+    </c-col>
+  </c-row>
+}
+
+@if (!loading() || expenses().length > 0) {
+  <!-- Search and View Toggle -->
+  <c-row class="mb-4">
+    <c-col xs="12" md="6">
+      <div class="search-box">
+        <svg cIcon name="cilSearch"></svg>
+        <input
+          cFormControl
+          type="text"
+          placeholder="Search expenses..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+    </c-col>
+    <c-col xs="12" md="6" class="d-flex justify-content-end align-items-center">
+      <div class="btn-group" role="group">
+        <button
+          cButton
+          [color]="viewMode() === 'grid' ? 'primary' : 'light'"
+          (click)="viewMode.set('grid')"
+          size="sm"
+        >
+          <svg cIcon name="cilGrid"></svg>
+          <span class="ms-2 d-none d-md-inline">Grid</span>
+        </button>
+        <button
+          cButton
+          [color]="viewMode() === 'list' ? 'primary' : 'light'"
+          (click)="viewMode.set('list')"
+          size="sm"
+        >
+          <svg cIcon name="cilList"></svg>
+          <span class="ms-2 d-none d-md-inline">List</span>
+        </button>
+      </div>
+    </c-col>
+  </c-row>
+
+  <!-- Grid View -->
+  @if (viewMode() === "grid") {
+    <c-row>
+      @for (expense of filteredExpenses; track expense._id) {
+        <c-col xs="12" sm="6" lg="4" xl="3" class="mb-4">
+          <c-card class="expense-card h-100">
+            <c-card-body>
+              <div
+                class="d-flex justify-content-between align-items-start mb-3"
+              >
+                <c-badge [color]="getCategoryColor(expense.category)">
+                  {{ expense.category }}
+                </c-badge>
+                <div class="expense-amount">₹{{ expense.amount }}</div>
+              </div>
+
+              <h6 class="mb-2 fw-bold">{{ expense.title }}</h6>
+
+              @if (expense.description) {
+                <p class="text-body-secondary small mb-3">
+                  {{ expense.description }}
+                </p>
+              }
+
+              <div class="expense-info-item">
+                <svg cIcon name="cilCalendar" size="sm"></svg>
+                <span>{{ expense.expenseDate | date: "MMM d, yyyy" }}</span>
+              </div>
+
+              <div class="expense-info-item">
+                <svg cIcon name="cilCreditCard" size="sm"></svg>
+                <c-badge
+                  [color]="getPaymentMethodColor(expense.paymentMethod)"
+                  class="ms-1"
+                >
+                  {{ expense.paymentMethod }}
+                </c-badge>
+              </div>
+
+              @if (expense.vendorName) {
+                <div class="expense-info-item">
+                  <svg cIcon name="cilUser" size="sm"></svg>
+                  <span>{{ expense.vendorName }}</span>
+                </div>
+              }
+
+              @if (expense.referenceNo) {
+                <div class="expense-info-item">
+                  <svg cIcon name="cilFile" size="sm"></svg>
+                  <span class="receipt-number">{{ expense.referenceNo }}</span>
+                </div>
+              }
+
+              <div class="d-flex gap-2 mt-3 pt-3 border-top">
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  class="flex-fill"
+                  (click)="openEditModal(expense)"
+                >
+                  <svg cIcon name="cilPencil" size="sm"></svg>
+                </button>
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  class="flex-fill"
+                  (click)="openDeleteModal(expense)"
+                >
+                  <svg
+                    cIcon
+                    name="cilTrash"
+                    size="sm"
+                    class="text-danger"
+                  ></svg>
+                </button>
+              </div>
+            </c-card-body>
+          </c-card>
+        </c-col>
+      }
+    </c-row>
+  }
+
+  <!-- List View -->
+  @if (viewMode() === "list") {
+    <c-row>
+      <c-col xs="12">
+        <c-card>
+          <c-card-body class="p-0">
+            <table cTable [hover]="true" class="mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Title</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Payment Method</th>
+                  <th scope="col">Vendor</th>
+                  <th scope="col">Reference No</th>
+                  <th scope="col" style="width: 100px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (expense of filteredExpenses; track expense._id) {
+                  <tr>
+                    <td>
+                      <div>
+                        <div class="fw-bold">{{ expense.title }}</div>
+                        @if (expense.description) {
+                          <div class="small text-body-secondary">
+                            {{ expense.description }}
+                          </div>
+                        }
+                      </div>
+                    </td>
+                    <td>
+                      <c-badge [color]="getCategoryColor(expense.category)">
+                        {{ expense.category }}
+                      </c-badge>
+                    </td>
+                    <td>
+                      <div class="expense-amount">₹{{ expense.amount }}</div>
+                    </td>
+                    <td>
+                      <span class="text-body-secondary small">
+                        {{ expense.expenseDate | date: "MMM d, yyyy" }}
+                      </span>
+                    </td>
+                    <td>
+                      <c-badge
+                        [color]="getPaymentMethodColor(expense.paymentMethod)"
+                      >
+                        {{ expense.paymentMethod }}
+                      </c-badge>
+                    </td>
+                    <td>
+                      @if (expense.vendorName) {
+                        <span class="text-body-secondary small">{{
+                          expense.vendorName
+                        }}</span>
+                      } @else {
+                        <span class="text-body-secondary">-</span>
+                      }
+                    </td>
+                    <td>
+                      @if (expense.referenceNo) {
+                        <span class="receipt-number">{{
+                          expense.referenceNo
+                        }}</span>
+                      } @else {
+                        <span class="text-body-secondary">-</span>
+                      }
+                    </td>
+                    <td>
+                      <button
+                        cButton
+                        color="ghost"
+                        size="sm"
+                        class="me-1"
+                        (click)="openEditModal(expense)"
+                      >
+                        <svg cIcon name="cilPencil"></svg>
+                      </button>
+                      <button
+                        cButton
+                        color="ghost"
+                        size="sm"
+                        (click)="openDeleteModal(expense)"
+                      >
+                        <svg cIcon name="cilTrash" class="text-danger"></svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </c-card-body>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <c-card-footer
+              class="d-flex justify-content-between align-items-center"
+            >
+              <small class="text-body-secondary">
+                Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
+                {{ Math.min(currentPage() * pageSize(), totalExpenses()) }} of
+                {{ totalExpenses() }} expenses
+              </small>
+              <div class="d-flex gap-2">
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  (click)="previousPage()"
+                  [disabled]="currentPage() === 1 || loading()"
+                >
+                  <svg cIcon name="cilChevronLeft"></svg>
+                  Previous
+                </button>
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  (click)="nextPage()"
+                  [disabled]="currentPage() === totalPages() || loading()"
+                >
+                  Next
+                  <svg cIcon name="cilChevronRight"></svg>
+                </button>
+              </div>
+            </c-card-footer>
+          }
+        </c-card>
+      </c-col>
+    </c-row>
+  }
+
+  <!-- Empty State -->
+  @if (filteredExpenses.length === 0 && !loading()) {
+    <c-row>
+      <c-col xs="12">
+        <c-card>
+          <c-card-body class="text-center py-5">
+            <svg
+              cIcon
+              name="cilWallet"
+              size="3xl"
+              class="text-body-secondary mb-3"
+            ></svg>
+            <h5 class="text-body-secondary">No expenses found</h5>
+            <p class="text-body-secondary">
+              Start tracking your expenses by adding a new one
+            </p>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  }
+
+  <!-- Create/Edit Modal -->
+  <c-modal
+    [visible]="modalVisible()"
+    (visibleChange)="modalVisible.set($event)"
+    size="lg"
+  >
+    <c-modal-header>
+      <h5 cModalTitle>
+        <svg
+          cIcon
+          [name]="isEditMode() ? 'cilPencil' : 'cilPlus'"
+          class="me-2"
+        ></svg>
+        {{ isEditMode() ? "Edit Expense" : "Add New Expense" }}
+      </h5>
+      <button cButtonClose (click)="closeModal()"></button>
+    </c-modal-header>
+    <c-modal-body>
+      @if (error()) {
+        <c-alert
+          color="danger"
+          [dismissible]="true"
+          (visibleChange)="!$event && error.set('')"
+        >
+          <svg cIcon name="cilWarning" class="me-2"></svg>
+          {{ error() }}
+        </c-alert>
+      }
+      @if (success()) {
+        <c-alert color="success">
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+          {{ success() }}
+        </c-alert>
+      }
+
+      <form>
+        <c-row>
+          <c-col xs="12">
+            <div class="mb-3">
+              <label cLabel for="title"
+                >Title <span class="text-danger">*</span></label
+              >
+              <input
+                cFormControl
+                id="title"
+                type="text"
+                [(ngModel)]="currentExpense.title"
+                name="title"
+                placeholder="Enter expense title"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+        </c-row>
+
+        <c-row>
+          <c-col xs="12">
+            <div class="mb-3">
+              <label cLabel for="description">Description</label>
+              <textarea
+                cFormControl
+                id="description"
+                rows="2"
+                [(ngModel)]="currentExpense.description"
+                name="description"
+                placeholder="Enter description"
+                [disabled]="loading()"
+              ></textarea>
+            </div>
+          </c-col>
+        </c-row>
+
+        <c-row>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="amount"
+                >Amount <span class="text-danger">*</span></label
+              >
+              <input
+                cFormControl
+                id="amount"
+                type="number"
+                [(ngModel)]="currentExpense.amount"
+                name="amount"
+                placeholder="Enter amount"
+                min="0"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="category"
+                >Category <span class="text-danger">*</span></label
+              >
+              <select
+                cSelect
+                id="category"
+                [(ngModel)]="currentExpense.category"
+                name="category"
+                [disabled]="loading()"
+              >
+                <option value="">Select category</option>
+                @for (cat of categories; track cat) {
+                  <option [value]="cat">{{ cat }}</option>
+                }
+              </select>
+            </div>
+          </c-col>
+        </c-row>
+
+        <c-row>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="expenseDate"
+                >Date <span class="text-danger">*</span></label
+              >
+              <input
+                cFormControl
+                id="expenseDate"
+                type="date"
+                [(ngModel)]="currentExpense.expenseDate"
+                name="expenseDate"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="paymentMethod"
+                >Payment Method <span class="text-danger">*</span></label
+              >
+              <select
+                cSelect
+                id="paymentMethod"
+                [(ngModel)]="currentExpense.paymentMethod"
+                name="paymentMethod"
+                [disabled]="loading()"
+              >
+                @for (method of paymentMethods; track method) {
+                  <option [value]="method">{{ method }}</option>
+                }
+              </select>
+            </div>
+          </c-col>
+        </c-row>
+
+        <c-row>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="vendorName">Vendor Name</label>
+              <input
+                cFormControl
+                id="vendorName"
+                type="text"
+                [(ngModel)]="currentExpense.vendorName"
+                name="vendorName"
+                placeholder="Enter vendor name"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="referenceNo">Reference Number</label>
+              <input
+                cFormControl
+                id="referenceNo"
+                type="text"
+                [(ngModel)]="currentExpense.referenceNo"
+                name="referenceNo"
+                placeholder="Enter reference number"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+        </c-row>
+
+        <c-row>
+          <c-col xs="12">
+            <div class="mb-3">
+              <label cLabel for="receiptUrl">Receipt URL</label>
+              <input
+                cFormControl
+                id="receiptUrl"
+                type="url"
+                [(ngModel)]="currentExpense.receiptUrl"
+                name="receiptUrl"
+                placeholder="Enter receipt URL"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+        </c-row>
+      </form>
+    </c-modal-body>
+    <c-modal-footer>
+      <button
+        cButton
+        color="light"
+        (click)="closeModal()"
+        [disabled]="loading()"
+      >
+        Cancel
+      </button>
+      <button
+        cButton
+        color="primary"
+        (click)="saveExpense()"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <c-spinner size="sm" class="me-2"></c-spinner>
+        } @else {
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+        }
+        {{ isEditMode() ? "Update Expense" : "Add Expense" }}
+      </button>
+    </c-modal-footer>
+  </c-modal>
+
+  <!-- Delete Confirmation Modal -->
+  <c-modal
+    [visible]="deleteModalVisible()"
+    (visibleChange)="deleteModalVisible.set($event)"
+  >
+    <c-modal-header>
+      <h5 cModalTitle>
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        Confirm Delete
+      </h5>
+      <button cButtonClose (click)="closeDeleteModal()"></button>
+    </c-modal-header>
+    <c-modal-body>
+      @if (error()) {
+        <c-alert
+          color="danger"
+          [dismissible]="true"
+          (visibleChange)="!$event && error.set('')"
+        >
+          <svg cIcon name="cilWarning" class="me-2"></svg>
+          {{ error() }}
+        </c-alert>
+      }
+      @if (success()) {
+        <c-alert color="success">
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+          {{ success() }}
+        </c-alert>
+      }
+
+      <div class="text-center py-3">
+        <svg cIcon name="cilWarning" size="3xl" class="text-warning mb-3"></svg>
+        <h5>Are you sure?</h5>
+        <p class="text-body-secondary mb-0">
+          You are about to delete the expense
+          <strong>"{{ expenseToDelete?.title }}"</strong>. This action cannot be
+          undone.
+        </p>
+      </div>
+    </c-modal-body>
+    <c-modal-footer>
+      <button
+        cButton
+        color="light"
+        (click)="closeDeleteModal()"
+        [disabled]="loading()"
+      >
+        Cancel
+      </button>
+      <button
+        cButton
+        color="danger"
+        (click)="deleteExpense()"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <c-spinner size="sm" class="me-2"></c-spinner>
+        } @else {
+          <svg cIcon name="cilTrash" class="me-2"></svg>
+        }
+        Delete Expense
+      </button>
+    </c-modal-footer>
+  </c-modal>
+}
