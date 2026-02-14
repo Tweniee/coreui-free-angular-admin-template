@@ -1,0 +1,104 @@
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.member-card {
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #667eea;
+  }
+}
+
+.stats-card {
+  border: 1px solid #e0e0e0;
+
+  .stats-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stats-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+  }
+
+  .stats-label {
+    font-size: 0.875rem;
+    color: #718096;
+  }
+}
+
+.search-box {
+  position: relative;
+
+  input {
+    padding-left: 2.5rem;
+    border: 1px solid #e0e0e0;
+
+    &:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+  }
+
+  svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.member-info-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+
+  svg {
+    margin-right: 0.5rem;
+    opacity: 0.6;
+  }
+}
+
+.member-code {
+  font-family: 'Courier New', monospace;
+  background: #f3f4f6;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.days-badge {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}

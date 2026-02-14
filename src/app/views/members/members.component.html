@@ -1,0 +1,740 @@
+<!-- Page Header -->
+<c-row class="mb-4">
+  <c-col>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="mb-1">
+          <svg cIcon name="cilPeople" class="me-2" style="color: #667eea"></svg>
+          Members Management
+        </h2>
+        <p class="text-body-secondary mb-0">
+          <svg cIcon name="cilInfo" size="sm" class="me-1"></svg>
+          Manage gym members, memberships, and subscriptions
+        </p>
+      </div>
+      <button
+        cButton
+        color="primary"
+        (click)="openCreateModal()"
+        [disabled]="loading()"
+      >
+        <svg cIcon name="cilUserPlus" class="me-2"></svg>
+        Add New Member
+      </button>
+    </div>
+  </c-col>
+</c-row>
+
+<!-- Stats Cards -->
+@if (members().length > 0) {
+  <c-row class="mb-4">
+    <c-col xs="12" md="4">
+      <c-card class="stats-card">
+        <c-card-body>
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-primary-subtle">
+              <svg cIcon name="cilPeople" style="color: #667eea"></svg>
+            </div>
+            <div class="ms-3">
+              <div class="stats-value">{{ totalMembers() }}</div>
+              <div class="stats-label">Total Members</div>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+    <c-col xs="12" md="4">
+      <c-card class="stats-card">
+        <c-card-body>
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-success-subtle">
+              <svg cIcon name="cilCheckCircle" style="color: #10b981"></svg>
+            </div>
+            <div class="ms-3">
+              <div class="stats-value">{{ getActiveCount() }}</div>
+              <div class="stats-label">Active Subscriptions</div>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+    <c-col xs="12" md="4">
+      <c-card class="stats-card">
+        <c-card-body>
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-danger-subtle">
+              <svg cIcon name="cilWarning" style="color: #ef4444"></svg>
+            </div>
+            <div class="ms-3">
+              <div class="stats-value">{{ getNoSubscriptionCount() }}</div>
+              <div class="stats-label">No Subscription</div>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+}
+
+<!-- Loading State -->
+@if (loading() && members().length === 0) {
+  <c-row>
+    <c-col xs="12" class="text-center py-5">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-3 text-body-secondary">Loading members...</p>
+    </c-col>
+  </c-row>
+}
+
+<!-- Error State -->
+@if (error() && members().length === 0) {
+  <c-row>
+    <c-col xs="12">
+      <c-alert
+        color="danger"
+        [dismissible]="true"
+        (visibleChange)="!$event && error.set('')"
+      >
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        {{ error() }}
+      </c-alert>
+    </c-col>
+  </c-row>
+}
+
+@if (!loading() || members().length > 0) {
+  <!-- Search and View Toggle -->
+  <c-row class="mb-4">
+    <c-col xs="12" md="6">
+      <div class="search-box">
+        <svg cIcon name="cilSearch"></svg>
+        <input
+          cFormControl
+          type="text"
+          placeholder="Search by name, phone, or member code..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+    </c-col>
+    <c-col xs="12" md="6" class="d-flex justify-content-end align-items-center">
+      <div class="btn-group" role="group">
+        <button
+          cButton
+          [color]="viewMode() === 'grid' ? 'primary' : 'light'"
+          (click)="viewMode.set('grid')"
+          size="sm"
+        >
+          <svg cIcon name="cilGrid"></svg>
+          <span class="ms-2 d-none d-md-inline">Grid</span>
+        </button>
+        <button
+          cButton
+          [color]="viewMode() === 'list' ? 'primary' : 'light'"
+          (click)="viewMode.set('list')"
+          size="sm"
+        >
+          <svg cIcon name="cilList"></svg>
+          <span class="ms-2 d-none d-md-inline">List</span>
+        </button>
+      </div>
+    </c-col>
+  </c-row>
+
+  <!-- Grid View -->
+  @if (viewMode() === "grid") {
+    <c-row>
+      @for (member of filteredMembers; track member._id) {
+        <c-col xs="12" sm="6" lg="4" xl="3" class="mb-4">
+          <c-card class="member-card h-100">
+            <c-card-body>
+              <div class="d-flex align-items-center mb-3">
+                <div class="user-avatar me-3">
+                  {{ member.profile.fullName.charAt(0).toUpperCase() }}
+                </div>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1 fw-bold">{{ member.profile.fullName }}</h6>
+                  <div class="member-code">{{ member.memberCode }}</div>
+                </div>
+              </div>
+
+              <div class="member-info-item">
+                <svg cIcon name="cilPhone" size="sm"></svg>
+                <span>{{ member.user.phoneNumber }}</span>
+              </div>
+
+              @if (member.profile.email) {
+                <div class="member-info-item">
+                  <svg cIcon name="cilEnvelopeClosed" size="sm"></svg>
+                  <span class="text-truncate">{{ member.profile.email }}</span>
+                </div>
+              }
+
+              <div class="mt-3 pt-3 border-top">
+                <div class="mb-2">
+                  <small class="text-body-secondary d-block mb-1">Plan</small>
+                  <c-badge color="info">{{ member.plan.planName }}</c-badge>
+                </div>
+                <div class="mb-2">
+                  <small class="text-body-secondary d-block mb-1">Status</small>
+                  <c-badge [color]="getMembershipStatusColor(member)">
+                    {{ member.status }}
+                  </c-badge>
+                </div>
+                <div class="mb-2">
+                  <small class="text-body-secondary d-block mb-1"
+                    >Days Left</small
+                  >
+                  <span class="days-badge">
+                    <svg cIcon name="cilClock" size="sm"></svg>
+                    {{ member.daysLeft }}
+                  </span>
+                </div>
+                <div class="mb-2">
+                  <small class="text-body-secondary d-block mb-1"
+                    >Payment</small
+                  >
+                  <c-badge
+                    [color]="
+                      getPaymentStatusColor(member.payment.paymentStatus)
+                    "
+                  >
+                    {{ member.payment.paymentStatus }}
+                  </c-badge>
+                  <span class="ms-2 fw-bold">₹{{ member.finalPrice }}</span>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-3">
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  class="flex-fill"
+                  (click)="openEditModal(member)"
+                >
+                  <svg cIcon name="cilPencil" size="sm"></svg>
+                </button>
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  class="flex-fill"
+                  (click)="openDeleteModal(member)"
+                >
+                  <svg
+                    cIcon
+                    name="cilTrash"
+                    size="sm"
+                    class="text-danger"
+                  ></svg>
+                </button>
+              </div>
+            </c-card-body>
+          </c-card>
+        </c-col>
+      }
+    </c-row>
+  }
+
+  <!-- List View -->
+  @if (viewMode() === "list") {
+    <c-row>
+      <c-col xs="12">
+        <c-card>
+          <c-card-body class="p-0">
+            <table cTable [hover]="true" class="mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Member</th>
+                  <th scope="col">Contact</th>
+                  <th scope="col">Plan</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Days Left</th>
+                  <th scope="col">Payment</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Expires</th>
+                  <th scope="col" style="width: 100px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (member of filteredMembers; track member._id) {
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div
+                          class="user-avatar me-3"
+                          style="width: 40px; height: 40px; font-size: 16px"
+                        >
+                          {{ member.profile.fullName.charAt(0).toUpperCase() }}
+                        </div>
+                        <div>
+                          <div class="fw-bold">
+                            {{ member.profile.fullName }}
+                          </div>
+                          <div class="member-code">{{ member.memberCode }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div>
+                        <div class="small">
+                          <svg
+                            cIcon
+                            name="cilPhone"
+                            size="sm"
+                            class="me-1"
+                          ></svg>
+                          {{ member.user.phoneNumber }}
+                        </div>
+                        @if (member.profile.email) {
+                          <div class="small text-body-secondary">
+                            <svg
+                              cIcon
+                              name="cilEnvelopeClosed"
+                              size="sm"
+                              class="me-1"
+                            ></svg>
+                            {{ member.profile.email }}
+                          </div>
+                        }
+                      </div>
+                    </td>
+                    <td>
+                      <c-badge color="info">{{ member.plan.planName }}</c-badge>
+                      <div class="small text-body-secondary">
+                        {{ member.durationDays }} days
+                      </div>
+                    </td>
+                    <td>
+                      <c-badge [color]="getMembershipStatusColor(member)">
+                        {{ member.status }}
+                      </c-badge>
+                    </td>
+                    <td>
+                      <span class="days-badge">
+                        <svg cIcon name="cilClock" size="sm"></svg>
+                        {{ member.daysLeft }}
+                      </span>
+                    </td>
+                    <td>
+                      <c-badge
+                        [color]="
+                          getPaymentStatusColor(member.payment.paymentStatus)
+                        "
+                      >
+                        {{ member.payment.paymentStatus }}
+                      </c-badge>
+                      <div class="small text-body-secondary">
+                        {{ member.payment.paymentMode }}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-bold">₹{{ member.finalPrice }}</div>
+                      @if (member.discountAmount > 0) {
+                        <div class="small text-success">
+                          -₹{{ member.discountAmount }} discount
+                        </div>
+                      }
+                    </td>
+                    <td>
+                      <span class="text-body-secondary small">
+                        {{ member.endDate | date: "MMM d, yyyy" }}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        cButton
+                        color="ghost"
+                        size="sm"
+                        class="me-1"
+                        (click)="openEditModal(member)"
+                      >
+                        <svg cIcon name="cilPencil"></svg>
+                      </button>
+                      <button
+                        cButton
+                        color="ghost"
+                        size="sm"
+                        (click)="openDeleteModal(member)"
+                      >
+                        <svg cIcon name="cilTrash" class="text-danger"></svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </c-card-body>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <c-card-footer
+              class="d-flex justify-content-between align-items-center"
+            >
+              <small class="text-body-secondary">
+                Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
+                {{ Math.min(currentPage() * pageSize(), totalMembers()) }} of
+                {{ totalMembers() }} members
+              </small>
+              <div class="d-flex gap-2">
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  (click)="previousPage()"
+                  [disabled]="currentPage() === 1 || loading()"
+                >
+                  <svg cIcon name="cilChevronLeft"></svg>
+                  Previous
+                </button>
+                <button
+                  cButton
+                  color="light"
+                  size="sm"
+                  (click)="nextPage()"
+                  [disabled]="currentPage() === totalPages() || loading()"
+                >
+                  Next
+                  <svg cIcon name="cilChevronRight"></svg>
+                </button>
+              </div>
+            </c-card-footer>
+          }
+        </c-card>
+      </c-col>
+    </c-row>
+  }
+
+  <!-- Empty State -->
+  @if (filteredMembers.length === 0 && !loading()) {
+    <c-row>
+      <c-col xs="12">
+        <c-card>
+          <c-card-body class="text-center py-5">
+            <svg
+              cIcon
+              name="cilSearch"
+              size="3xl"
+              class="text-body-secondary mb-3"
+            ></svg>
+            <h5 class="text-body-secondary">No members found</h5>
+            <p class="text-body-secondary">
+              Try adjusting your search criteria or add a new member
+            </p>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  }
+
+  <!-- Create/Edit Modal -->
+  <c-modal
+    [visible]="modalVisible()"
+    (visibleChange)="modalVisible.set($event)"
+    size="lg"
+  >
+    <c-modal-header>
+      <h5 cModalTitle>
+        <svg
+          cIcon
+          [name]="isEditMode() ? 'cilPencil' : 'cilUserPlus'"
+          class="me-2"
+        ></svg>
+        {{ isEditMode() ? "Edit Member" : "Add New Member" }}
+      </h5>
+      <button cButtonClose (click)="closeModal()"></button>
+    </c-modal-header>
+    <c-modal-body>
+      @if (error()) {
+        <c-alert
+          color="danger"
+          [dismissible]="true"
+          (visibleChange)="!$event && error.set('')"
+        >
+          <svg cIcon name="cilWarning" class="me-2"></svg>
+          {{ error() }}
+        </c-alert>
+      }
+      @if (success()) {
+        <c-alert color="success">
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+          {{ success() }}
+        </c-alert>
+      }
+
+      <form>
+        @if (!isEditMode()) {
+          <c-row>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="mobileNumber"
+                  >Mobile Number <span class="text-danger">*</span></label
+                >
+                <input
+                  cFormControl
+                  id="mobileNumber"
+                  type="tel"
+                  [(ngModel)]="currentMember.mobileNumber"
+                  name="mobileNumber"
+                  placeholder="10-digit mobile number"
+                  maxlength="10"
+                  [disabled]="loading()"
+                />
+              </div>
+            </c-col>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="fullName"
+                  >Full Name <span class="text-danger">*</span></label
+                >
+                <input
+                  cFormControl
+                  id="fullName"
+                  type="text"
+                  [(ngModel)]="currentMember.fullName"
+                  name="fullName"
+                  placeholder="Enter full name"
+                  [disabled]="loading()"
+                />
+              </div>
+            </c-col>
+          </c-row>
+
+          <c-row>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="gender">Gender</label>
+                <select
+                  cSelect
+                  id="gender"
+                  [(ngModel)]="currentMember.gender"
+                  name="gender"
+                  [disabled]="loading()"
+                >
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </c-col>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="dateOfBirth">Date of Birth</label>
+                <input
+                  cFormControl
+                  id="dateOfBirth"
+                  type="date"
+                  [(ngModel)]="currentMember.dateOfBirth"
+                  name="dateOfBirth"
+                  [disabled]="loading()"
+                />
+              </div>
+            </c-col>
+          </c-row>
+        } @else {
+          <c-row>
+            <c-col xs="12">
+              <div class="mb-3">
+                <label cLabel for="fullNameEdit"
+                  >Full Name <span class="text-danger">*</span></label
+                >
+                <input
+                  cFormControl
+                  id="fullNameEdit"
+                  type="text"
+                  [(ngModel)]="currentMember.fullName"
+                  name="fullName"
+                  placeholder="Enter full name"
+                  [disabled]="loading()"
+                />
+              </div>
+            </c-col>
+          </c-row>
+        }
+
+        <c-row>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="durationDays"
+                >Duration (Days) <span class="text-danger">*</span></label
+              >
+              <input
+                cFormControl
+                id="durationDays"
+                type="number"
+                [(ngModel)]="currentMember.durationDays"
+                name="durationDays"
+                placeholder="Enter duration in days"
+                min="0"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+          <c-col xs="12" md="6">
+            <div class="mb-3">
+              <label cLabel for="discountAmount">Discount Amount</label>
+              <input
+                cFormControl
+                id="discountAmount"
+                type="number"
+                [(ngModel)]="currentMember.discountAmount"
+                name="discountAmount"
+                placeholder="Enter discount amount"
+                min="0"
+                [disabled]="loading()"
+              />
+            </div>
+          </c-col>
+        </c-row>
+
+        @if (!isEditMode()) {
+          <c-row>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="paymentMode"
+                  >Payment Mode <span class="text-danger">*</span></label
+                >
+                <select
+                  cSelect
+                  id="paymentMode"
+                  [(ngModel)]="currentMember.paymentMode"
+                  name="paymentMode"
+                  [disabled]="loading()"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Online">Online</option>
+                </select>
+              </div>
+            </c-col>
+            <c-col xs="12" md="6">
+              <div class="mb-3">
+                <label cLabel for="referenceNo">Reference No</label>
+                <input
+                  cFormControl
+                  id="referenceNo"
+                  type="text"
+                  [(ngModel)]="currentMember.referenceNo"
+                  name="referenceNo"
+                  placeholder="Enter reference number"
+                  [disabled]="loading()"
+                />
+              </div>
+            </c-col>
+          </c-row>
+        }
+
+        @if (isEditMode()) {
+          <c-row>
+            <c-col xs="12">
+              <div class="mb-3">
+                <label cLabel for="status">Status</label>
+                <select
+                  cSelect
+                  id="status"
+                  [(ngModel)]="currentMember.status"
+                  name="status"
+                  [disabled]="loading()"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Expired">Expired</option>
+                  <option value="Suspended">Suspended</option>
+                  <option value="No Subscription">No Subscription</option>
+                </select>
+              </div>
+            </c-col>
+          </c-row>
+        }
+      </form>
+    </c-modal-body>
+    <c-modal-footer>
+      <button
+        cButton
+        color="light"
+        (click)="closeModal()"
+        [disabled]="loading()"
+      >
+        Cancel
+      </button>
+      <button
+        cButton
+        color="primary"
+        (click)="saveMember()"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <c-spinner size="sm" class="me-2"></c-spinner>
+        } @else {
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+        }
+        {{ isEditMode() ? "Update Member" : "Add Member" }}
+      </button>
+    </c-modal-footer>
+  </c-modal>
+
+  <!-- Delete Confirmation Modal -->
+  <c-modal
+    [visible]="deleteModalVisible()"
+    (visibleChange)="deleteModalVisible.set($event)"
+  >
+    <c-modal-header>
+      <h5 cModalTitle>
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        Confirm Delete
+      </h5>
+      <button cButtonClose (click)="closeDeleteModal()"></button>
+    </c-modal-header>
+    <c-modal-body>
+      @if (error()) {
+        <c-alert
+          color="danger"
+          [dismissible]="true"
+          (visibleChange)="!$event && error.set('')"
+        >
+          <svg cIcon name="cilWarning" class="me-2"></svg>
+          {{ error() }}
+        </c-alert>
+      }
+      @if (success()) {
+        <c-alert color="success">
+          <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+          {{ success() }}
+        </c-alert>
+      }
+
+      <div class="text-center py-3">
+        <svg cIcon name="cilWarning" size="3xl" class="text-warning mb-3"></svg>
+        <h5>Are you sure?</h5>
+        <p class="text-body-secondary mb-0">
+          You are about to delete the member
+          <strong>"{{ memberToDelete?.profile?.fullName }}"</strong>. This
+          action cannot be undone.
+        </p>
+      </div>
+    </c-modal-body>
+    <c-modal-footer>
+      <button
+        cButton
+        color="light"
+        (click)="closeDeleteModal()"
+        [disabled]="loading()"
+      >
+        Cancel
+      </button>
+      <button
+        cButton
+        color="danger"
+        (click)="deleteMember()"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <c-spinner size="sm" class="me-2"></c-spinner>
+        } @else {
+          <svg cIcon name="cilTrash" class="me-2"></svg>
+        }
+        Delete Member
+      </button>
+    </c-modal-footer>
+  </c-modal>
+}
