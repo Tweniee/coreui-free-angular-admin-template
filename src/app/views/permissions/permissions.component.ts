@@ -162,6 +162,11 @@ export class PermissionsComponent implements OnInit {
     this.loadRolePermissions(roleId);
   }
 
+  onPermissionChange(permission: Permission, event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    permission.isGranted = checkbox.checked;
+  }
+
   selectAllForModule(module: ModulePermissions) {
     const allGranted = module.permissions.every((p) => p.isGranted);
     module.permissions.forEach((p) => {

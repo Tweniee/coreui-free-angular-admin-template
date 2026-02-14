@@ -5,7 +5,7 @@
 
     th {
       font-weight: 600;
-      padding: 1.25rem 1rem;
+      padding: 1rem;
       vertical-align: middle;
       white-space: nowrap;
 
@@ -14,8 +14,9 @@
         width: 250px;
       }
 
-      &.permissions-column {
-        min-width: 400px;
+      &.permission-col {
+        min-width: 100px;
+        width: 120px;
       }
 
       &.action-column {
@@ -57,31 +58,49 @@
       }
     }
   }
-}
 
-.permissions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.75rem;
-  padding: 0.5rem 0;
+  // Sticky first column for better UX on horizontal scroll
+  .sticky-col {
+    position: sticky;
+    left: 0;
+    background-color: var(--cui-table-bg);
+    z-index: 1;
 
-  .permission-item {
-    .form-check {
-      .form-check-label {
-        cursor: pointer;
-        user-select: none;
-        font-size: 0.875rem;
-
-        &:hover {
-          color: var(--cui-primary);
-        }
-      }
+    &::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: var(--cui-border-color);
     }
+  }
+
+  tbody tr:hover .sticky-col {
+    background-color: var(--cui-table-hover-bg);
   }
 }
 
 .table-responsive {
   overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--cui-secondary-bg);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--cui-border-color);
+    border-radius: 4px;
+
+    &:hover {
+      background: var(--cui-secondary);
+    }
+  }
 }
 
 // Role selector styling

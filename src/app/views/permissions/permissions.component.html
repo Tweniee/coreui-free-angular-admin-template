@@ -79,14 +79,49 @@
             <table cTable class="mb-0 permissions-table">
               <thead>
                 <tr>
-                  <th scope="col" class="module-column">
+                  <th scope="col" class="module-column sticky-col">
                     <div class="d-flex align-items-center">
                       <svg cIcon name="cilLayers" class="me-2"></svg>
                       <strong>Module</strong>
                     </div>
                   </th>
-                  <th scope="col" class="permissions-column">
-                    <strong>Permissions</strong>
+                  <th scope="col" class="text-center permission-col">
+                    <div class="d-flex flex-column align-items-center">
+                      <svg cIcon name="cilPlus" class="mb-1 text-success"></svg>
+                      <strong>Create</strong>
+                    </div>
+                  </th>
+                  <th scope="col" class="text-center permission-col">
+                    <div class="d-flex flex-column align-items-center">
+                      <svg cIcon name="cilSearch" class="mb-1 text-info"></svg>
+                      <strong>Read</strong>
+                    </div>
+                  </th>
+                  <th scope="col" class="text-center permission-col">
+                    <div class="d-flex flex-column align-items-center">
+                      <svg
+                        cIcon
+                        name="cilPencil"
+                        class="mb-1 text-warning"
+                      ></svg>
+                      <strong>Update</strong>
+                    </div>
+                  </th>
+                  <th scope="col" class="text-center permission-col">
+                    <div class="d-flex flex-column align-items-center">
+                      <svg cIcon name="cilTrash" class="mb-1 text-danger"></svg>
+                      <strong>Delete</strong>
+                    </div>
+                  </th>
+                  <th scope="col" class="text-center permission-col">
+                    <div class="d-flex flex-column align-items-center">
+                      <svg
+                        cIcon
+                        name="cilCloudDownload"
+                        class="mb-1 text-primary"
+                      ></svg>
+                      <strong>Export</strong>
+                    </div>
                   </th>
                   <th scope="col" class="text-center action-column">
                     <strong>All</strong>
@@ -99,7 +134,7 @@
                   track module.moduleId
                 ) {
                   <tr>
-                    <td class="module-cell">
+                    <td class="module-cell sticky-col">
                       <div class="d-flex align-items-center">
                         <svg
                           cIcon
@@ -111,42 +146,39 @@
                         }}</strong>
                       </div>
                     </td>
-                    <td>
-                      <div class="permissions-grid">
+                    @for (
+                      action of [
+                        "create",
+                        "read",
+                        "update",
+                        "delete",
+                        "export",
+                      ];
+                      track action
+                    ) {
+                      <td class="text-center">
                         @for (
                           permission of module.permissions;
                           track permission.permissionId
                         ) {
-                          <div class="permission-item">
-                            <div class="form-check">
+                          @if (permission.action.toLowerCase() === action) {
+                            <div
+                              class="form-check d-flex justify-content-center"
+                            >
                               <input
                                 class="form-check-input"
                                 type="checkbox"
                                 [id]="'perm-' + permission.permissionId"
-                                [(ngModel)]="permission.isGranted"
-                                [name]="'perm-' + permission.permissionId"
+                                [checked]="permission.isGranted"
+                                (change)="
+                                  onPermissionChange(permission, $event)
+                                "
                               />
-                              <label
-                                class="form-check-label"
-                                [for]="'perm-' + permission.permissionId"
-                              >
-                                <div class="d-flex align-items-center">
-                                  <svg
-                                    cIcon
-                                    [name]="getActionIcon(permission.action)"
-                                    size="sm"
-                                    class="me-2"
-                                  ></svg>
-                                  <span>{{
-                                    getActionName(permission.action)
-                                  }}</span>
-                                </div>
-                              </label>
                             </div>
-                          </div>
+                          }
                         }
-                      </div>
-                    </td>
+                      </td>
+                    }
                     <td class="text-center">
                       <div class="form-check d-flex justify-content-center">
                         <input
@@ -165,7 +197,12 @@
             </table>
           </div>
         </c-card-body>
-        <c-card-footer class="d-flex justify-content-end">
+        <c-card-footer
+          class="d-flex justify-content-between align-items-center"
+        >
+          <small class="text-body-secondary">
+            Check the boxes to grant permissions to the selected role
+          </small>
           <button
             cButton
             color="primary"
