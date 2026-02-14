@@ -179,6 +179,14 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'staff',
+        loadComponent: () =>
+          import('./views/staff/staff.component').then((m) => m.StaffComponent),
+        data: {
+          title: 'Staff',
+        },
+      },
+      {
         path: 'pages',
         loadChildren: () =>
           import('./views/pages/routes').then((m) => m.routes),
