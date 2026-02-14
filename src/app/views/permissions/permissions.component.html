@@ -69,6 +69,20 @@
   </c-row>
 }
 
+<!-- Loading State for Role Switch -->
+@if (loading() && rolePermissions()) {
+  <c-row>
+    <c-col xs="12">
+      <c-card>
+        <c-card-body class="text-center py-5">
+          <c-spinner color="primary" size="sm"></c-spinner>
+          <p class="mt-3 text-body-secondary mb-0">Loading permissions...</p>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+}
+
 <!-- Permissions Table -->
 @if (rolePermissions() && !loading()) {
   <c-row>
@@ -86,42 +100,19 @@
                     </div>
                   </th>
                   <th scope="col" class="text-center permission-col">
-                    <div class="d-flex flex-column align-items-center">
-                      <svg cIcon name="cilPlus" class="mb-1 text-success"></svg>
-                      <strong>Create</strong>
-                    </div>
+                    <strong>Create</strong>
                   </th>
                   <th scope="col" class="text-center permission-col">
-                    <div class="d-flex flex-column align-items-center">
-                      <svg cIcon name="cilSearch" class="mb-1 text-info"></svg>
-                      <strong>Read</strong>
-                    </div>
+                    <strong>Read</strong>
                   </th>
                   <th scope="col" class="text-center permission-col">
-                    <div class="d-flex flex-column align-items-center">
-                      <svg
-                        cIcon
-                        name="cilPencil"
-                        class="mb-1 text-warning"
-                      ></svg>
-                      <strong>Update</strong>
-                    </div>
+                    <strong>Update</strong>
                   </th>
                   <th scope="col" class="text-center permission-col">
-                    <div class="d-flex flex-column align-items-center">
-                      <svg cIcon name="cilTrash" class="mb-1 text-danger"></svg>
-                      <strong>Delete</strong>
-                    </div>
+                    <strong>Delete</strong>
                   </th>
                   <th scope="col" class="text-center permission-col">
-                    <div class="d-flex flex-column align-items-center">
-                      <svg
-                        cIcon
-                        name="cilCloudDownload"
-                        class="mb-1 text-primary"
-                      ></svg>
-                      <strong>Export</strong>
-                    </div>
+                    <strong>Export</strong>
                   </th>
                   <th scope="col" class="text-center action-column">
                     <strong>All</strong>
