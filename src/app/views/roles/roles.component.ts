@@ -147,10 +147,6 @@ export class RolesComponent implements OnInit {
     this.deleteModalVisible.set(true);
   }
 
-  hasPermission(permission: string): boolean {
-    return this.currentRole.permissions?.includes(permission) || false;
-  }
-
   formatRoleName(name: string): string {
     if (!name) return '';
     return name
