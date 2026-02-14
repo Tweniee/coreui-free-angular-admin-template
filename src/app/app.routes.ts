@@ -101,6 +101,14 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'users',
+        loadComponent: () =>
+          import('./views/users/users.component').then((m) => m.UsersComponent),
+        data: {
+          title: 'Users',
+        },
+      },
+      {
         path: 'pages',
         loadChildren: () =>
           import('./views/pages/routes').then((m) => m.routes),

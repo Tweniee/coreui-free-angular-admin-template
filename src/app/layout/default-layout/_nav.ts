@@ -16,4 +16,9 @@ export const navItems: INavData[] = [
     url: '/permissions',
     iconComponent: { name: 'cil-lock-locked' },
   },
+  {
+    name: 'Users',
+    url: '/users',
+    iconComponent: { name: 'cil-people' },
+  },
 ];
