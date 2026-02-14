@@ -109,6 +109,7 @@ import {
   cilUserUnfollow,
   cilWallet,
   cilWarning,
+  cilX,
 } from '@coreui/icons';
 
 import { signet } from './signet';
@@ -225,6 +226,7 @@ export const iconSubset = {
   cilUserUnfollow,
   cilWallet,
   cilWarning,
+  cilX,
   logo,
   signet,
 };
@@ -340,6 +342,7 @@ export enum IconSubset {
   cilUserUnfollow = 'cilUserUnfollow',
   cilWallet = 'cilWallet',
   cilWarning = 'cilWarning',
+  cilX = 'cilX',
   logo = 'logo',
   signet = 'signet',
 }

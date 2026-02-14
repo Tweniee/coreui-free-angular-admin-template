@@ -119,6 +119,16 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'membership-plans',
+        loadComponent: () =>
+          import('./views/membership-plans/membership-plans.component').then(
+            (m) => m.MembershipPlansComponent,
+          ),
+        data: {
+          title: 'Membership Plans',
+        },
+      },
+      {
         path: 'pages',
         loadChildren: () =>
           import('./views/pages/routes').then((m) => m.routes),

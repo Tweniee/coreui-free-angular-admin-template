@@ -26,4 +26,9 @@ export const navItems: INavData[] = [
     url: '/payments',
     iconComponent: { name: 'cil-wallet' },
   },
+  {
+    name: 'Membership Plans',
+    url: '/membership-plans',
+    iconComponent: { name: 'cil-tags' },
+  },
 ];
