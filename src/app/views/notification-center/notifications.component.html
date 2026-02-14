@@ -1,0 +1,155 @@
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <svg cIcon name="cilBell" size="xl" class="me-2"></svg>
+          <strong>Notifications</strong>
+          @if (getUnreadCount() > 0) {
+            <c-badge color="danger" class="ms-2">
+              {{ getUnreadCount() }} unread
+            </c-badge>
+          }
+        </div>
+        @if (getUnreadCount() > 0) {
+          <button cButton color="primary" size="sm" (click)="markAllAsRead()">
+            <svg cIcon name="cilCheckCircle" class="me-1"></svg>
+            Mark all as read
+          </button>
+        }
+      </c-card-header>
+      <c-card-body>
+        <!-- Filters and Search -->
+        <c-row class="mb-4">
+          <c-col md="6" class="mb-3 mb-md-0">
+            <c-input-group>
+              <span cInputGroupText>
+                <svg cIcon name="cilSearch"></svg>
+              </span>
+              <input
+                cFormControl
+                type="text"
+                placeholder="Search notifications..."
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="onSearchChange()"
+              />
+            </c-input-group>
+          </c-col>
+          <c-col md="6">
+            <c-button-group role="group" class="w-100">
+              <button
+                cButton
+                [color]="filterType === 'all' ? 'primary' : 'secondary'"
+                variant="outline"
+                (click)="setFilter('all')"
+              >
+                All ({{ allNotifications.length }})
+              </button>
+              <button
+                cButton
+                [color]="filterType === 'unread' ? 'primary' : 'secondary'"
+                variant="outline"
+                (click)="setFilter('unread')"
+              >
+                Unread ({{ getUnreadCount() }})
+              </button>
+              <button
+                cButton
+                [color]="filterType === 'read' ? 'primary' : 'secondary'"
+                variant="outline"
+                (click)="setFilter('read')"
+              >
+                Read ({{ allNotifications.length - getUnreadCount() }})
+              </button>
+            </c-button-group>
+          </c-col>
+        </c-row>
+
+        <!-- Notifications List -->
+        @if (filteredNotifications.length === 0) {
+          <div class="text-center py-5 text-body-secondary">
+            <svg cIcon name="cilBell" size="xxl" class="mb-3 opacity-50"></svg>
+            <h5 class="text-body-secondary">No notifications found</h5>
+            <p class="text-body-tertiary">
+              @if (searchTerm) {
+                Try adjusting your search terms
+              } @else if (filterType !== "all") {
+                Try changing the filter
+              } @else {
+                You're all caught up!
+              }
+            </p>
+          </div>
+        } @else {
+          <div class="notifications-list">
+            @for (
+              notification of filteredNotifications;
+              track notification.id
+            ) {
+              <div
+                class="notification-card"
+                [class.notification-unread]="!notification.read"
+              >
+                <div class="notification-icon-wrapper">
+                  <div
+                    class="notification-icon-bg"
+                    [attr.data-color]="notification.color"
+                  >
+                    <svg
+                      cIcon
+                      [name]="notification.icon"
+                      size="xl"
+                      class="notification-icon"
+                      [attr.data-color]="notification.color"
+                    ></svg>
+                  </div>
+                </div>
+                <div class="notification-content">
+                  <div class="notification-header">
+                    <div class="d-flex align-items-center">
+                      <h6
+                        class="mb-0 me-2"
+                        [class.fw-bold]="!notification.read"
+                      >
+                        {{ notification.title }}
+                      </h6>
+                      @if (!notification.read) {
+                        <c-badge
+                          [color]="notification.color"
+                          class="notification-badge"
+                        >
+                          NEW
+                        </c-badge>
+                      }
+                    </div>
+                    <div class="notification-actions">
+                      @if (!notification.read) {
+                        <button
+                          cButton
+                          color="success"
+                          variant="ghost"
+                          size="sm"
+                          (click)="markAsRead(notification.id)"
+                          title="Mark as read"
+                        >
+                          <svg cIcon name="cilCheckCircle"></svg>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                  <p class="notification-message text-body-secondary mb-2">
+                    {{ notification.message }}
+                  </p>
+                  <small class="notification-time text-body-tertiary">
+                    <svg cIcon name="cilClock" size="sm" class="me-1"></svg>
+                    {{ notification.time }}
+                  </small>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

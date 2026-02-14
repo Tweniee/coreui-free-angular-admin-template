@@ -24,10 +24,15 @@ import {
 
 import { IconDirective } from '@coreui/icons-angular';
 import { AuthService } from '../../../services/auth.service';
+import {
+  NotificationService,
+  Notification,
+} from '../../../services/notification.service';
 
 @Component({
   selector: 'app-default-header',
   templateUrl: './default-header.component.html',
+  styleUrls: ['./default-header.component.scss'],
   imports: [
     ContainerComponent,
     HeaderTogglerDirective,
@@ -53,7 +58,11 @@ import { AuthService } from '../../../services/auth.service';
 export class DefaultHeaderComponent extends HeaderComponent {
   readonly #colorModeService = inject(ColorModeService);
   readonly authService = inject(AuthService);
+  readonly notificationService = inject(NotificationService);
   readonly colorMode = this.#colorModeService.colorMode;
+
+  notifications: Notification[] = [];
+  unreadCount = 0;
 
   readonly colorModes = [
     { name: 'light', text: 'Light', icon: 'cilSun' },
@@ -71,6 +80,22 @@ export class DefaultHeaderComponent extends HeaderComponent {
 
   constructor() {
     super();
+    this.loadNotifications();
+  }
+
+  loadNotifications() {
+    this.notificationService.notifications$.subscribe((notifications) => {
+      this.notifications = notifications;
+      this.unreadCount = this.notificationService.getUnreadCount();
+    });
+  }
+
+  markAsRead(id: number) {
+    this.notificationService.markAsRead(id);
+  }
+
+  markAllAsRead() {
+    this.notificationService.markAllAsRead();
   }
 
   sidebarId = input('sidebar1');

@@ -28,9 +28,7 @@
     </c-header-nav>
 
     <c-header-nav class="d-none d-md-flex ms-auto">
-      <a cNavLink>
-        <svg cIcon class="my-1" name="cilBell" size="lg"></svg>
-      </a>
+      <ng-container *ngTemplateOutlet="notificationDropdown" />
       <a cNavLink>
         <svg cIcon class="my-1" name="cilList" size="lg"></svg>
       </a>
@@ -188,5 +186,120 @@
         </button>
       }
     </div>
+  </c-dropdown>
+</ng-template>
+
+<ng-template #notificationDropdown>
+  <c-dropdown alignment="end" variant="nav-item">
+    <button
+      [caret]="false"
+      cDropdownToggle
+      aria-label="Open notifications"
+      class="position-relative"
+    >
+      <svg cIcon class="my-1" name="cilBell" size="lg"></svg>
+      @if (unreadCount > 0) {
+        <c-badge
+          class="position-absolute top-0 start-100 translate-middle rounded-pill"
+          color="danger"
+          style="font-size: 0.65rem; padding: 0.25rem 0.4rem"
+        >
+          {{ unreadCount }}
+        </c-badge>
+      }
+    </button>
+    <ul
+      cDropdownMenu
+      class="pt-0"
+      style="min-width: 350px; max-height: 500px; overflow-y: auto"
+    >
+      <li>
+        <h6
+          cDropdownHeader
+          class="bg-body-secondary text-body-secondary fw-semibold py-2 rounded-top d-flex justify-content-between align-items-center"
+        >
+          <span>Notifications</span>
+          @if (unreadCount > 0) {
+            <button
+              class="btn btn-sm btn-link text-decoration-none p-0 text-body-secondary"
+              (click)="markAllAsRead()"
+              style="font-size: 0.75rem"
+            >
+              Mark all as read
+            </button>
+          }
+        </h6>
+      </li>
+      @if (notifications.length === 0) {
+        <li class="text-center py-4 text-body-secondary">
+          <svg cIcon name="cilBell" size="xl" class="mb-2"></svg>
+          <p class="mb-0">No notifications</p>
+        </li>
+      }
+      @for (notification of notifications; track notification.id) {
+        <li>
+          <a
+            cDropdownItem
+            class="d-flex align-items-start py-3 notification-item"
+            [class.notification-unread]="!notification.read"
+            (click)="markAsRead(notification.id)"
+            style="cursor: pointer"
+          >
+            <div class="me-3">
+              <div
+                class="rounded-circle d-flex align-items-center justify-content-center notification-icon-bg"
+                [attr.data-color]="notification.color"
+                style="width: 40px; height: 40px"
+              >
+                <svg
+                  cIcon
+                  [name]="notification.icon"
+                  size="lg"
+                  class="notification-icon"
+                  [attr.data-color]="notification.color"
+                ></svg>
+              </div>
+            </div>
+            <div class="flex-grow-1">
+              <div
+                class="d-flex justify-content-between align-items-start mb-1"
+              >
+                <strong class="text-body" [class.fw-bold]="!notification.read">
+                  {{ notification.title }}
+                </strong>
+                @if (!notification.read) {
+                  <c-badge
+                    [color]="notification.color"
+                    class="ms-2"
+                    style="font-size: 0.5rem; padding: 0.2rem 0.4rem"
+                  >
+                    NEW
+                  </c-badge>
+                }
+              </div>
+              <p class="text-body-secondary mb-1 small">
+                {{ notification.message }}
+              </p>
+              <small class="text-body-tertiary">
+                <svg cIcon name="cilClock" size="sm" class="me-1"></svg>
+                {{ notification.time }}
+              </small>
+            </div>
+          </a>
+        </li>
+      }
+      <li>
+        <hr cDropdownDivider />
+      </li>
+      <li>
+        <a
+          cDropdownItem
+          routerLink="/notification-center"
+          class="text-center text-primary"
+        >
+          View all notifications
+        </a>
+      </li>
+    </ul>
   </c-dropdown>
 </ng-template>

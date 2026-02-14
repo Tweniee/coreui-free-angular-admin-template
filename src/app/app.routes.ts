@@ -63,6 +63,16 @@ export const routes: Routes = [
           import('./views/notifications/routes').then((m) => m.routes),
       },
       {
+        path: 'notification-center',
+        loadComponent: () =>
+          import('./views/notification-center/notifications.component').then(
+            (m) => m.NotificationsComponent,
+          ),
+        data: {
+          title: 'Notification Center',
+        },
+      },
+      {
         path: 'widgets',
         loadChildren: () =>
           import('./views/widgets/routes').then((m) => m.routes),

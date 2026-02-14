@@ -1,0 +1,66 @@
+// Notification dropdown styles with dark mode support
+.notification-item {
+  border-bottom: 1px solid var(--cui-border-color);
+  transition: background-color 0.15s ease-in-out;
+
+  &:hover {
+    background-color: var(--cui-dropdown-link-hover-bg) !important;
+  }
+}
+
+.notification-unread {
+  background-color: var(--cui-tertiary-bg);
+}
+
+.notification-icon-bg {
+  position: relative;
+
+  &[data-color="success"] {
+    background-color: rgba(var(--cui-success-rgb), 0.15);
+  }
+
+  &[data-color="danger"] {
+    background-color: rgba(var(--cui-danger-rgb), 0.15);
+  }
+
+  &[data-color="warning"] {
+    background-color: rgba(var(--cui-warning-rgb), 0.15);
+  }
+
+  &[data-color="info"] {
+    background-color: rgba(var(--cui-info-rgb), 0.15);
+  }
+
+  &[data-color="primary"] {
+    background-color: rgba(var(--cui-primary-rgb), 0.15);
+  }
+}
+
+.notification-icon {
+  &[data-color="success"] {
+    color: var(--cui-success);
+  }
+
+  &[data-color="danger"] {
+    color: var(--cui-danger);
+  }
+
+  &[data-color="warning"] {
+    color: var(--cui-warning);
+  }
+
+  &[data-color="info"] {
+    color: var(--cui-info);
+  }
+
+  &[data-color="primary"] {
+    color: var(--cui-primary);
+  }
+}
+
+// Dark mode specific adjustments
+[data-coreui-theme="dark"] {
+  .notification-unread {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
