@@ -1,0 +1,614 @@
+<!-- Header Section -->
+<c-row class="mb-4">
+  <c-col>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="mb-1">Exercise Library</h2>
+        <p class="text-body-secondary mb-0">Manage all exercises in your gym</p>
+      </div>
+      <button
+        cButton
+        color="primary"
+        (click)="openCreateModal()"
+        [disabled]="loading()"
+      >
+        <svg cIcon name="cilPlus" class="me-2"></svg>
+        Add Exercise
+      </button>
+    </div>
+  </c-col>
+</c-row>
+
+<!-- Error State -->
+@if (error() && exercises().length === 0) {
+  <c-row>
+    <c-col xs="12">
+      <c-alert
+        color="danger"
+        [dismissible]="true"
+        (visibleChange)="!$event && error.set('')"
+      >
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        {{ error() }}
+      </c-alert>
+    </c-col>
+  </c-row>
+}
+
+<!-- Search and Filters -->
+<c-row class="mb-4">
+  <c-col xs="12" md="3" class="mb-3 mb-md-0">
+    <input
+      cFormControl
+      type="text"
+      placeholder="Search exercises..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="applySearch()"
+    />
+  </c-col>
+  <c-col xs="12" md="2" class="mb-3 mb-md-0">
+    <select cSelect [(ngModel)]="levelFilter" (ngModelChange)="applyFilters()">
+      <option value="">All Levels</option>
+      @for (level of levels; track level) {
+        <option [value]="level">{{ level }}</option>
+      }
+    </select>
+  </c-col>
+  <c-col xs="12" md="2" class="mb-3 mb-md-0">
+    <select
+      cSelect
+      [(ngModel)]="categoryFilter"
+      (ngModelChange)="applyFilters()"
+    >
+      <option value="">All Categories</option>
+      @for (category of categories; track category) {
+        <option [value]="category">{{ category }}</option>
+      }
+    </select>
+  </c-col>
+  <c-col xs="12" md="2" class="mb-3 mb-md-0">
+    <button cButton color="light" (click)="clearFilters()" class="w-100">
+      Clear Filters
+    </button>
+  </c-col>
+</c-row>
+
+<!-- Loading State -->
+@if (loading() && exercises().length === 0) {
+  <c-row>
+    <c-col xs="12" class="text-center py-5">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-3 text-body-secondary">Loading exercises...</p>
+    </c-col>
+  </c-row>
+}
+
+<!-- Exercises Table -->
+@if (!loading() || exercises().length > 0) {
+  <c-row>
+    <c-col xs="12">
+      <c-card>
+        <c-card-body class="p-0">
+          <table cTable [hover]="true" class="mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Level</th>
+                <th scope="col">Equipment</th>
+                <th scope="col">Primary Muscles</th>
+                <th scope="col">Category</th>
+                <th scope="col" style="width: 120px">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (exercise of exercises(); track exercise._id) {
+                <tr>
+                  <td>
+                    <strong>{{ exercise.name }}</strong>
+                  </td>
+                  <td>
+                    <c-badge [color]="getLevelColor(exercise.level)">
+                      {{ exercise.level }}
+                    </c-badge>
+                  </td>
+                  <td>{{ exercise.equipment || "None" }}</td>
+                  <td>
+                    <small>{{
+                      (exercise.primaryMuscles || []).join(", ") || "N/A"
+                    }}</small>
+                  </td>
+                  <td>{{ exercise.category || "N/A" }}</td>
+                  <td>
+                    <button
+                      cButton
+                      color="ghost"
+                      size="sm"
+                      class="me-1"
+                      (click)="openDetailsModal(exercise)"
+                    >
+                      <svg cIcon name="cilInfo"></svg>
+                    </button>
+                    <button
+                      cButton
+                      color="ghost"
+                      size="sm"
+                      class="me-1"
+                      (click)="openEditModal(exercise)"
+                    >
+                      <svg cIcon name="cilPencil"></svg>
+                    </button>
+                    <button
+                      cButton
+                      color="ghost"
+                      size="sm"
+                      (click)="openDeleteModal(exercise)"
+                    >
+                      <svg cIcon name="cilTrash" class="text-danger"></svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <!-- Empty State -->
+  @if (exercises().length === 0) {
+    <c-row>
+      <c-col xs="12">
+        <c-card>
+          <c-card-body class="text-center py-5">
+            <svg
+              cIcon
+              name="cilTask"
+              size="3xl"
+              class="text-body-secondary mb-3"
+            ></svg>
+            <h5 class="text-body-secondary">No exercises found</h5>
+            <p class="text-body-secondary">Try adjusting your search</p>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  }
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+    <c-row class="mt-4">
+      <c-col xs="12">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="text-body-secondary">
+            Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
+            {{ Math.min(currentPage() * pageSize(), totalExercises()) }} of
+            {{ totalExercises() }} exercises
+          </div>
+          <div class="btn-group">
+            <button
+              cButton
+              color="light"
+              size="sm"
+              (click)="previousPage()"
+              [disabled]="currentPage() === 1 || loading()"
+            >
+              <svg cIcon name="cilChevronLeft"></svg>
+            </button>
+            <button cButton color="light" size="sm" disabled>
+              Page {{ currentPage() }} of {{ totalPages() }}
+            </button>
+            <button
+              cButton
+              color="light"
+              size="sm"
+              (click)="nextPage()"
+              [disabled]="currentPage() === totalPages() || loading()"
+            >
+              <svg cIcon name="cilChevronRight"></svg>
+            </button>
+          </div>
+        </div>
+      </c-col>
+    </c-row>
+  }
+}
+
+<!-- Create/Edit Modal -->
+<c-modal
+  [visible]="modalVisible()"
+  (visibleChange)="modalVisible.set($event)"
+  size="lg"
+>
+  <c-modal-header>
+    <h5 cModalTitle>
+      {{ isEditMode() ? "Edit Exercise" : "Create New Exercise" }}
+    </h5>
+    <button cButtonClose (click)="closeModal()"></button>
+  </c-modal-header>
+  <c-modal-body>
+    @if (error()) {
+      <c-alert
+        color="danger"
+        [dismissible]="true"
+        (visibleChange)="!$event && error.set('')"
+      >
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        {{ error() }}
+      </c-alert>
+    }
+    @if (success()) {
+      <c-alert color="success">
+        <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+        {{ success() }}
+      </c-alert>
+    }
+
+    <form>
+      <c-row>
+        <c-col xs="12" md="6">
+          <div class="mb-3">
+            <label cLabel for="id"
+              >Exercise ID <span class="text-danger">*</span></label
+            >
+            <input
+              cFormControl
+              id="id"
+              type="text"
+              [(ngModel)]="currentExercise.id"
+              name="id"
+              placeholder="e.g., custom-deadlift-1"
+              [disabled]="loading() || isEditMode()"
+            />
+            @if (isEditMode()) {
+              <small class="text-body-secondary">ID cannot be changed</small>
+            }
+          </div>
+        </c-col>
+        <c-col xs="12" md="6">
+          <div class="mb-3">
+            <label cLabel for="name"
+              >Exercise Name <span class="text-danger">*</span></label
+            >
+            <input
+              cFormControl
+              id="name"
+              type="text"
+              [(ngModel)]="currentExercise.name"
+              name="name"
+              placeholder="e.g., Romanian Deadlift"
+              [disabled]="loading()"
+            />
+          </div>
+        </c-col>
+      </c-row>
+
+      <c-row>
+        <c-col xs="12" md="6">
+          <div class="mb-3">
+            <label cLabel for="level"
+              >Level <span class="text-danger">*</span></label
+            >
+            <select
+              cSelect
+              id="level"
+              [(ngModel)]="currentExercise.level"
+              name="level"
+              [disabled]="loading()"
+            >
+              @for (level of levels; track level) {
+                <option [value]="level">{{ level }}</option>
+              }
+            </select>
+          </div>
+        </c-col>
+        <c-col xs="12" md="6">
+          <div class="mb-3">
+            <label cLabel for="equipment">Equipment</label>
+            <input
+              cFormControl
+              id="equipment"
+              type="text"
+              [(ngModel)]="currentExercise.equipment"
+              name="equipment"
+              placeholder="e.g., barbell"
+              [disabled]="loading()"
+            />
+          </div>
+        </c-col>
+      </c-row>
+
+      <c-row>
+        <c-col xs="12" md="6">
+          <div class="mb-3">
+            <label cLabel for="category">Category</label>
+            <select
+              cSelect
+              id="category"
+              [(ngModel)]="currentExercise.category"
+              name="category"
+              [disabled]="loading()"
+            >
+              <option value="">Select Category</option>
+              @for (category of categories; track category) {
+                <option [value]="category">{{ category }}</option>
+              }
+            </select>
+          </div>
+        </c-col>
+      </c-row>
+
+      <div class="mb-3">
+        <label cLabel for="primaryMuscles"
+          >Primary Muscles (comma-separated)</label
+        >
+        <input
+          cFormControl
+          id="primaryMuscles"
+          type="text"
+          [(ngModel)]="primaryMusclesInput"
+          name="primaryMuscles"
+          placeholder="e.g., hamstrings, glutes"
+          [disabled]="loading()"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label cLabel for="secondaryMuscles"
+          >Secondary Muscles (comma-separated)</label
+        >
+        <input
+          cFormControl
+          id="secondaryMuscles"
+          type="text"
+          [(ngModel)]="secondaryMusclesInput"
+          name="secondaryMuscles"
+          placeholder="e.g., lower back, traps"
+          [disabled]="loading()"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label cLabel for="instructions">Instructions (one per line)</label>
+        <textarea
+          cFormControl
+          id="instructions"
+          rows="5"
+          [(ngModel)]="instructionsInput"
+          name="instructions"
+          placeholder="Stand with feet hip-width apart&#10;Hold barbell with overhand grip&#10;Keep back straight and hinge at hips"
+          [disabled]="loading()"
+        ></textarea>
+      </div>
+    </form>
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="light" (click)="closeModal()" [disabled]="loading()">
+      Cancel
+    </button>
+    <button
+      cButton
+      color="primary"
+      (click)="saveExercise()"
+      [disabled]="loading()"
+    >
+      @if (loading()) {
+        <c-spinner size="sm" class="me-2"></c-spinner>
+      } @else {
+        <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+      }
+      {{ isEditMode() ? "Update Exercise" : "Create Exercise" }}
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- Delete Confirmation Modal -->
+<c-modal
+  [visible]="deleteModalVisible()"
+  (visibleChange)="deleteModalVisible.set($event)"
+>
+  <c-modal-header>
+    <h5 cModalTitle>Confirm Delete</h5>
+    <button cButtonClose (click)="closeDeleteModal()"></button>
+  </c-modal-header>
+  <c-modal-body>
+    @if (error()) {
+      <c-alert
+        color="danger"
+        [dismissible]="true"
+        (visibleChange)="!$event && error.set('')"
+      >
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        {{ error() }}
+      </c-alert>
+    }
+    @if (success()) {
+      <c-alert color="success">
+        <svg cIcon name="cilCheckCircle" class="me-2"></svg>
+        {{ success() }}
+      </c-alert>
+    }
+
+    <div class="text-center py-3">
+      <svg cIcon name="cilWarning" size="3xl" class="text-warning mb-3"></svg>
+      <h5>Are you sure?</h5>
+      <p class="text-body-secondary mb-0">
+        You are about to delete the exercise
+        <strong>{{ exerciseToDelete?.name }}</strong
+        >. This action cannot be undone.
+      </p>
+    </div>
+  </c-modal-body>
+  <c-modal-footer>
+    <button
+      cButton
+      color="light"
+      (click)="closeDeleteModal()"
+      [disabled]="loading()"
+    >
+      Cancel
+    </button>
+    <button
+      cButton
+      color="danger"
+      (click)="deleteExercise()"
+      [disabled]="loading()"
+    >
+      @if (loading()) {
+        <c-spinner size="sm" class="me-2"></c-spinner>
+      } @else {
+        <svg cIcon name="cilTrash" class="me-2"></svg>
+      }
+      Delete Exercise
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- Details Modal -->
+<c-modal
+  [visible]="detailsModalVisible()"
+  (visibleChange)="detailsModalVisible.set($event)"
+  size="lg"
+>
+  <c-modal-header>
+    <h5 cModalTitle>Exercise Details</h5>
+    <button cButtonClose (click)="closeDetailsModal()"></button>
+  </c-modal-header>
+  <c-modal-body>
+    @if (selectedExercise) {
+      <c-row class="mb-3">
+        <c-col xs="12">
+          <h4>{{ selectedExercise.name }}</h4>
+        </c-col>
+      </c-row>
+
+      <c-row class="mb-3">
+        <c-col xs="12" md="6">
+          <c-card class="h-100">
+            <c-card-body>
+              <h6 class="text-body-secondary mb-3">Basic Information</h6>
+              <div class="mb-2">
+                <small class="text-body-secondary">Level:</small>
+                <div>
+                  <c-badge [color]="getLevelColor(selectedExercise.level)">
+                    {{ selectedExercise.level }}
+                  </c-badge>
+                </div>
+              </div>
+              @if (selectedExercise.category) {
+                <div class="mb-2">
+                  <small class="text-body-secondary">Category:</small>
+                  <div>{{ selectedExercise.category }}</div>
+                </div>
+              }
+              @if (selectedExercise.equipment) {
+                <div class="mb-2">
+                  <small class="text-body-secondary">Equipment:</small>
+                  <div>{{ selectedExercise.equipment }}</div>
+                </div>
+              }
+              @if (selectedExercise.force) {
+                <div class="mb-2">
+                  <small class="text-body-secondary">Force:</small>
+                  <div>{{ selectedExercise.force }}</div>
+                </div>
+              }
+              @if (selectedExercise.mechanic) {
+                <div class="mb-2">
+                  <small class="text-body-secondary">Mechanic:</small>
+                  <div>{{ selectedExercise.mechanic }}</div>
+                </div>
+              }
+            </c-card-body>
+          </c-card>
+        </c-col>
+        <c-col xs="12" md="6">
+          <c-card class="h-100">
+            <c-card-body>
+              <h6 class="text-body-secondary mb-3">Muscles</h6>
+              <div class="mb-2">
+                <small class="text-body-secondary">Primary Muscles:</small>
+                <div>
+                  @for (
+                    muscle of selectedExercise.primaryMuscles;
+                    track muscle
+                  ) {
+                    <c-badge color="primary" class="me-1">{{ muscle }}</c-badge>
+                  }
+                </div>
+              </div>
+              @if (
+                selectedExercise.secondaryMuscles &&
+                selectedExercise.secondaryMuscles.length > 0
+              ) {
+                <div class="mb-2">
+                  <small class="text-body-secondary">Secondary Muscles:</small>
+                  <div>
+                    @for (
+                      muscle of selectedExercise.secondaryMuscles;
+                      track muscle
+                    ) {
+                      <c-badge color="secondary" class="me-1">{{
+                        muscle
+                      }}</c-badge>
+                    }
+                  </div>
+                </div>
+              }
+            </c-card-body>
+          </c-card>
+        </c-col>
+      </c-row>
+
+      @if (
+        selectedExercise.instructions &&
+        selectedExercise.instructions.length > 0
+      ) {
+        <c-card class="mb-3">
+          <c-card-body>
+            <h6 class="text-body-secondary mb-3">Instructions</h6>
+            <ol class="mb-0">
+              @for (
+                instruction of selectedExercise.instructions;
+                track $index
+              ) {
+                <li class="mb-2">{{ instruction }}</li>
+              }
+            </ol>
+          </c-card-body>
+        </c-card>
+      }
+
+      @if (selectedExercise.images && selectedExercise.images.length > 0) {
+        <c-card>
+          <c-card-body>
+            <h6 class="text-body-secondary mb-3">Images</h6>
+            <c-row>
+              @for (image of selectedExercise.images; track image) {
+                <c-col xs="12" md="6" class="mb-3">
+                  <img
+                    [src]="getImageUrl(image)"
+                    [alt]="selectedExercise.name"
+                    class="img-fluid rounded"
+                    style="max-height: 300px; object-fit: cover; width: 100%"
+                  />
+                </c-col>
+              }
+            </c-row>
+          </c-card-body>
+        </c-card>
+      }
+    }
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="light" (click)="closeDetailsModal()">Close</button>
+    <button
+      cButton
+      color="primary"
+      (click)="openEditModal(selectedExercise!); closeDetailsModal()"
+    >
+      <svg cIcon name="cilPencil" class="me-2"></svg>
+      Edit Exercise
+    </button>
+  </c-modal-footer>
+</c-modal>

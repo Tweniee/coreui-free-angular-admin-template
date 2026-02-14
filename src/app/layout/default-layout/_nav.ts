@@ -36,4 +36,9 @@ export const navItems: INavData[] = [
     url: '/member-trainer-assignments',
     iconComponent: { name: 'cil-user-follow' },
   },
+  {
+    name: 'Exercises',
+    url: '/exercises',
+    iconComponent: { name: 'cil-task' },
+  },
 ];
